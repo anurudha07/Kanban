@@ -30,15 +30,12 @@ const FavouriteList = () => {
   }, [list, boardId])
 
   const onDragEnd = async ({ source, destination }) => {
+    if (!destination) return
     const newList = [...list]
     const [removed] = newList.splice(source.index, 1)
     newList.splice(destination.index, 0, removed)
-
-    const activeItem = newList.findIndex(e => e.id === boardId)
-    setActiveIndex(activeItem)
-
+    setActiveIndex(newList.findIndex(e => e.id === boardId))
     dispatch(setFavouriteList(newList))
-
     try {
       await boardApi.updateFavouritePosition({ boards: newList })
     } catch (err) {
@@ -61,39 +58,34 @@ const FavouriteList = () => {
         </Box>
       </ListItem>
       <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable key={'list-board-droppable-key'} droppableId={'list-board-droppable'}>
+        <Droppable droppableId='favs' direction='horizontal'>
           {(provided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps}>
-              {
-                list.map((item, index) => (
-                  <Draggable key={item.id} draggableId={item.id} index={index}>
-                    {(provided, snapshot) => (
-                      <ListItemButton
-                        ref={provided.innerRef}
-                        {...provided.dragHandleProps}
-                        {...provided.draggableProps}
-                        selected={index === activeIndex}
-                        component={Link}
-                        to={`/boards/${item.id}`}
-                        sx={{
-                          pl: '20px',
-                          cursor: snapshot.isDragging ? 'grab' : 'pointer!important'
-                        }}
-                      >
-                        <Typography
-                          variant='body2'
-                          fontWeight='700'
-                          sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                        >
-                          {item.icon} {item.title}
-                        </Typography>
-                      </ListItemButton>
-                    )}
-                  </Draggable>
-                ))
-              }
+            <Box
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              sx={{ display: 'flex', overflowX: 'auto', gap: 1, px: 1, pb: 1 }}
+            >
+              {list.map((item, index) => (
+                <Draggable key={item.id} draggableId={item.id} index={index}>
+                  {(prov, snapshot) => (
+                    <ListItemButton
+                      ref={prov.innerRef}
+                      {...prov.dragHandleProps}
+                      {...prov.draggableProps}
+                      component={Link}
+                      to={`/boards/${item.id}`}
+                      selected={index === activeIndex}
+                      sx={{ minWidth: 96, whiteSpace: 'nowrap' }}
+                    >
+                      <Typography noWrap>
+                        {item.icon} {item.title}
+                      </Typography>
+                    </ListItemButton>
+                  )}
+                </Draggable>
+              ))}
               {provided.placeholder}
-            </div>
+            </Box>
           )}
         </Droppable>
       </DragDropContext>
