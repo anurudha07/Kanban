@@ -48,3 +48,10 @@
   top: 0 !important;
   background: #121212 !important;
 }
+
+/* Compact the toolbar on mobile */
+@media (max-width: 600px) {
+  .ck-editor__top {
+    padding: 0.5rem !important;
+  }
+}
