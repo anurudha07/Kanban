@@ -4,30 +4,29 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import authApi from '../api/authApi'
 
-
 const contentWidth = 380
 
 const Signup = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
-  const [nameErr, setNameErr] = useState('')
+  const [usernameErr, setUsernameErr] = useState('')
   const [emailErr, setEmailErr] = useState('')
   const [passwordErr, setPasswordErr] = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setNameErr('')
+    setUsernameErr('')
     setEmailErr('')
     setPasswordErr('')
 
     const form = new FormData(e.currentTarget)
-    const name = form.get('name')?.toString().trim() || ''
+    const username = form.get('username')?.toString().trim() || ''
     const email = form.get('email')?.toString().trim() || ''
     const password = form.get('password')?.toString().trim() || ''
 
     let hasError = false
-    if (!name) {
-      setNameErr('Please fill this field')
+    if (!username) {
+      setUsernameErr('Please fill this field')
       hasError = true
     }
     if (!email) {
@@ -42,13 +41,13 @@ const Signup = () => {
 
     setLoading(true)
     try {
-      const res = await authApi.signup({ name, email, password })
+      const res = await authApi.signup({ username, email, password })
       localStorage.setItem('token', res.token)
       navigate('/')
     } catch (err) {
-      const errors = err.data?.errors || []
+      const errors = err.errors || err.data?.errors || []
       errors.forEach(e => {
-        if (e.param === 'name') setNameErr(e.msg)
+        if (e.param === 'username') setUsernameErr(e.msg)
         if (e.param === 'email') setEmailErr(e.msg)
         if (e.param === 'password') setPasswordErr(e.msg)
       })
@@ -69,17 +68,14 @@ const Signup = () => {
         alignItems: 'center',
       }}
     >
-
-      {/* Two-line tagline */}
       <Typography
         variant="subtitle1"
         align="center"
-        sx={{ width: 380, mb: 4, color: 'text.secondary' }}
+        sx={{ width: contentWidth, mb: 4, color: 'text.secondary' }}
       >
         Welcome, Create an account to get started.
       </Typography>
 
-      {/* Signup Form */}
       <Box
         component="form"
         onSubmit={handleSubmit}
@@ -100,12 +96,12 @@ const Signup = () => {
           margin="normal"
           required
           fullWidth
-          id="name"
-          label="Name"
-          name="name"
+          id="username"
+          label="Username"
+          name="username"
           disabled={loading}
-          error={!!nameErr}
-          helperText={nameErr}
+          error={!!usernameErr}
+          helperText={usernameErr}
         />
         <TextField
           margin="normal"
