@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import authApi from '../api/authApi'
 
 
-const contentWidth = 400
+const contentWidth = 380
 
 const Signup = () => {
   const navigate = useNavigate()
@@ -62,7 +62,7 @@ const Signup = () => {
       component="main"
       sx={{
         minHeight: '100vh',
-        pt: 5,
+        pt: 4,
         px: 2,
         display: 'flex',
         flexDirection: 'column',
@@ -74,7 +74,7 @@ const Signup = () => {
       <Typography
         variant="subtitle1"
         align="center"
-        sx={{ width: contentWidth, mb: 4, color: 'text.secondary' }}
+        sx={{ width: 380, mb: 4, color: 'text.secondary' }}
       >
         Welcome, Create an account to get started.
       </Typography>
