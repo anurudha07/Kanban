@@ -1,4 +1,3 @@
-
 // eslint-disable-next-line no-unused-vars
 import { Box, Button, TextField, Typography } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
@@ -6,8 +5,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import authApi from '../api/authApi'
 
-
-const contentWidth = 400
+const contentWidth = 380
 
 const Login = () => {
   const navigate = useNavigate()
@@ -56,7 +54,7 @@ const Login = () => {
       component="main"
       sx={{
         minHeight: '100vh',
-        pt: 5,
+        pt: 4,
         px: 2,
         display: 'flex',
         flexDirection: 'column',
@@ -68,10 +66,9 @@ const Login = () => {
       <Typography
         variant="subtitle1"
         align="center"
-        sx={{ width: contentWidth, mb: 4, color: 'text.secondary' }}
+        sx={{ width: 368, mb: 4, color: 'text.secondary' }}
       >
-        Visualize Your Workflow for Increased Productivity.<br/>
-        Access Your Tasks Anytime, Anywhere.
+       Visualize Your Workflow to Maximize Efficiency. Access Your Tasks Anytime, Anywhere.
       </Typography>
 
       {/* Login Form */}
