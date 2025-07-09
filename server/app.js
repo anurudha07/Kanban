@@ -7,7 +7,7 @@ const cors = require('cors')
 const app = express();
 
 app.use(cors({
-    origin: ['http://localhost:3000', 'https://your-react-app.onrender.com'],
+    origin: ['http://localhost:3000', 'https://kanban-client-b8bj.onrender.com'],
     credentials: true,
 }));
 app.use(logger('dev'));
