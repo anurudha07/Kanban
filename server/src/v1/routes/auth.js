@@ -7,10 +7,10 @@ const User = require('../models/user');
 
 router.post(
   '/signup',
-  // Validate name (at least 3 characters)
-  body('name')
+  // Validate username (at least 3 characters)
+  body('username')
     .isLength({ min: 3 })
-    .withMessage('Name must be at least 3 characters'),
+    .withMessage('Username must be at least 3 characters'),
 
   // Validate email format and uniqueness
   body('email')
