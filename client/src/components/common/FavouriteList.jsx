@@ -1,4 +1,3 @@
-// src/components/common/FavouriteList.jsx
 import React, { useEffect, useState } from 'react'
 import { Box, ListItem, ListItemButton, Typography, useTheme, useMediaQuery } from '@mui/material'
 import { useDispatch, useSelector } from 'react-redux'
@@ -16,7 +15,7 @@ const FavouriteList = () => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
-  // refresh when boards change
+ 
   useEffect(() => {
     boardApi.getFavourites()
       .then((res) => dispatch(setFavouriteList(res)))
