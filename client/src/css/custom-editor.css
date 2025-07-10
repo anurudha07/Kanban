@@ -1,57 +1,77 @@
-.ck.ck-editor__main>.ck-editor__editable {
+/* src/css/custom-editor.css */
+
+/* Editable area */
+.ck.ck-editor__main > .ck-editor__editable {
   background-color: transparent;
   border: none;
   outline: none;
 }
-
-.ck.ck-editor__main>.ck-editor__editable.ck-focused {
+.ck.ck-editor__main > .ck-editor__editable.ck-focused {
   border: none;
 }
 
-.ck.ck-toolbar .ck.ck-toolbar__separator {
-  background-color: transparent;
-}
-
+/* Toolbar container: always dark */
+.ck.ck-editor__top,
+.ck.ck-toolbar,
 .ck.ck-toolbar.ck-toolbar_grouping {
-  background-color: transparent;
-  border: none;
+  background: #333 !important;
+  border: none !important;
 }
 
+/* Separator invisible */
+.ck.ck-toolbar .ck.ck-toolbar__separator {
+  background-color: transparent !important;
+}
+
+/* Buttons: white on dark, with hover state */
 .ck.ck-button,
 .ck.ck-button.ck-on {
-  color: white;
-  background-color: transparent;
+  color: #fff !important;
+  background-color: transparent !important;
 }
-
 .ck.ck-button:hover,
 .ck.ck-button.ck-off:hover,
 .ck.ck-button.ck-on:hover {
-  background-color: transparent !important;
+  background-color: rgba(255,255,255,0.1) !important;
+  color: #ddd !important;
   cursor: pointer;
-  color: gray;
 }
 
+/* Dropdown panel buttons */
 .ck-dropdown__panel .ck.ck-button.ck-off.ck-button__with-text {
-  background-color: black !important;
+  background-color: #444 !important;
+  color: #fff !important;
+  
 }
 
+/* List items in dropdowns */
 .ck.ck-list__item {
-  background-color: black !important;
+  background-color: #444 !important;
+  color: #fff !important;
+  width: 74vw !important;
 }
 
+/* Panel borders */
 .ck-dropdown__panel .ck-dropdown__panel-visible {
-  border: none;
+  border: none !important;
 }
 
-.ck-editor__top {
-  position: sticky !important;
-  top: 0 !important;
-  background: #121212 !important;
-}
-
-/* Compact the toolbar on mobile */
+/* Mobile tweaks */
 @media (max-width: 600px) {
-  .ck-editor__top {
-    padding: 0.5rem !important;
+  .ck.ck-editor__top {
+    padding: 4px !important;
+    background: #333 !important;
+  }
+  .ck.ck-editor__editable_inline {
+    font-size: 0.9rem !important;
   }
 }
+
+ .ck.ck-dropdown__panel {
+    width: 90vw !important;
+    right: -2vw !important;
+
+    /* 👇 This moves the dropdown content downward */
+    top: 40px !important;
+  }
+
