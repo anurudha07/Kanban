@@ -70,8 +70,6 @@
  .ck.ck-dropdown__panel {
     width: 90vw !important;
     right: -2vw !important;
-
-    /* 👇 This moves the dropdown content downward */
     top: 40px !important;
   }
 
