@@ -1,4 +1,3 @@
-// src/components/common/EmojiPicker.jsx
 import React, { useState, useEffect } from 'react'
 import {
   Box,
@@ -65,7 +64,7 @@ const EmojiPicker = ({ icon, onChange }) => {
             }}
           >
             <Picker
-              theme="dark"           // switch to dark theme
+              theme="dark"           
               onSelect={handleSelect}
               showPreview={false}
               showSkinTones={false}
