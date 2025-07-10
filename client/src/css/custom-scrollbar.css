@@ -15,10 +15,8 @@
   background-color: #555;
 }
 
-/* Shrink scrollbars on small screens */
-@media (max-width: 600px) {
+@media (max-width:600px) {
   ::-webkit-scrollbar {
-    width: 3px;
-    height: 3px;
+    width: 6px;
   }
 }
