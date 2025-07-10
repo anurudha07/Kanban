@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import authApi from '../api/authApi'
 
-const contentWidth = 340
+const contentWidth = 300
 
 const Login = () => {
   const navigate = useNavigate()
@@ -54,21 +54,19 @@ const Login = () => {
       component="main"
       sx={{
         minHeight: '100vh',
-        pt: 2,
+        pt: 1,
         px: 0,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
       }}
     >
-
-      
       <Typography
         variant="subtitle1"
         align="center"
-        sx={{ width: 380, mb: 4, color: 'text.secondary' }}
+        sx={{ width: 350, mb: 3, fontSize: 13.7, color: 'text.secondary' }}
       >
-       Visualize Your Workflow to Maximize Efficiency. Access Your Tasks Anytime, Anywhere.
+        Visualize Your Workflow Better to Maximize Efficiency. Access Your Tasks Anytime, Anywhere.
       </Typography>
 
       {/* Login Form */}
@@ -77,11 +75,18 @@ const Login = () => {
         onSubmit={handleSubmit}
         noValidate
         sx={{
-          width: contentWidth,
+          width: 300,
           bgcolor: 'background.paper',
-          p: 3,
+          px: 3,
+          pt: 1.8,
           borderRadius: 1,
           boxShadow: 1,
+          // Autofill override:
+          '& input:-webkit-autofill': {
+            WebkitBoxShadow: theme => `0 0 0 100px ${theme.palette.background.paper} inset`,
+            WebkitTextFillColor: theme => theme.palette.text.primary,
+            caretColor: theme => theme.palette.text.primary,
+          },
         }}
       >
         <Typography variant="h5" align="center" gutterBottom>
