@@ -1,4 +1,3 @@
-// src/components/common/TaskModal.jsx
 import React, { useEffect, useRef, useState } from 'react'
 import {
   Modal, Backdrop, Fade, Box, IconButton, TextField,
@@ -36,7 +35,7 @@ const TaskModal = ({ task: t0, boardId, onUpdate, onDelete, onClose }) => {
     setTask(t0)
     setTitle(t0?.title || '')
     setContent(t0?.content || '')
-    // adjust editor height after render
+    
     setTimeout(() => {
       if (editorRef.current) {
         const editable = editorRef.current.querySelector('.ck-editor__editable_inline')
@@ -49,7 +48,7 @@ const TaskModal = ({ task: t0, boardId, onUpdate, onDelete, onClose }) => {
 
   // Called when user hits the X button or backdrop
   const handleClose = () => {
-    // Propagate update back up
+    
     onUpdate({ ...task, title, content })
     onClose()
   }
