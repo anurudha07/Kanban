@@ -1,5 +1,15 @@
-import { Box, Button, Typography, Divider, TextField, IconButton, Card, useTheme, useMediaQuery } from '@mui/material'
-import { useEffect, useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import {
+  Box,
+  Button,
+  Typography,
+  Divider,
+  TextField,
+  IconButton,
+  Card,
+  useTheme,
+  useMediaQuery,
+} from '@mui/material'
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd'
 import AddOutlinedIcon from '@mui/icons-material/AddOutlined'
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
@@ -7,84 +17,170 @@ import sectionApi from '../../api/sectionApi'
 import taskApi from '../../api/taskApi'
 import TaskModal from './TaskModal'
 
-let timer
-const timeout = 500
-
-const Kanban = props => {
+const Kanban = ({ data, boardId, onSectionsChange }) => {
+  const [sections, setSections] = useState([])
+  const [selectedTask, setSelectedTask] = useState(null)
   const theme = useTheme()
-  const isXs = useMediaQuery(theme.breakpoints.down('sm'))
-  const boardId = props.boardId
-  const [data, setData] = useState([])
-  const [selectedTask, setSelectedTask] = useState()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
-  useEffect(() => setData(props.data), [props.data])
+  useEffect(() => {
+    setSections(data || [])
+  }, [data])
+
+  const updateAndNotify = newSecs => {
+    setSections(newSecs)
+    onSectionsChange(newSecs)
+  }
 
   const onDragEnd = async ({ source, destination }) => {
     if (!destination) return
-    const srcIdx = data.findIndex(e => e.id === source.droppableId)
-    const dstIdx = data.findIndex(e => e.id === destination.droppableId)
-    const newData = [...data]
-    const sourceTasks = [...newData[srcIdx].tasks]
-    const destTasks = [...newData[dstIdx].tasks]
-    if (source.droppableId !== destination.droppableId) {
-      const [moved] = sourceTasks.splice(source.index, 1)
-      destTasks.splice(destination.index, 0, moved)
-      newData[srcIdx].tasks = sourceTasks
-      newData[dstIdx].tasks = destTasks
-    } else {
-      const [moved] = destTasks.splice(source.index, 1)
-      destTasks.splice(destination.index, 0, moved)
-      newData[dstIdx].tasks = destTasks
-    }
+    const secs = [...sections]
+    const srcIdx = secs.findIndex(s => s.id === source.droppableId)
+    const dstIdx = secs.findIndex(s => s.id === destination.droppableId)
+    const src = { ...secs[srcIdx] }
+    const dst = { ...secs[dstIdx] }
+    const [moved] = src.tasks.splice(source.index, 1)
+    dst.tasks.splice(destination.index, 0, moved)
+    secs[srcIdx] = src
+    secs[dstIdx] = dst
+    updateAndNotify(secs)
     try {
       await taskApi.updatePosition(boardId, {
-        resourceList: sourceTasks,
-        destinationList: destTasks,
-        resourceSectionId: data[srcIdx].id,
-        destinationSectionId: data[dstIdx].id
+        resourceList: src.tasks,
+        destinationList: dst.tasks,
+        resourceSectionId: src.id,
+        destinationSectionId: dst.id,
       })
-      setData(newData)
     } catch (err) {
-      alert(err)
+      console.error(err)
     }
   }
 
-  // ... createSection, deleteSection, updateSectionTitle, createTask, onUpdateTask, onDeleteTask ...
+  const createSection = () =>
+    sectionApi
+      .create(boardId)
+      .then(s => updateAndNotify([...sections, s]))
+      .catch(console.error)
+
+  const deleteSection = id =>
+    sectionApi
+      .delete(boardId, id)
+      .then(() => updateAndNotify(sections.filter(s => s.id !== id)))
+      .catch(console.error)
+
+  const renameSection = (id, title) => {
+    const updated = sections.map(s => (s.id === id ? { ...s, title } : s))
+    updateAndNotify(updated)
+    sectionApi.update(boardId, id, { title }).catch(console.error)
+  }
+
+  // Create task and immediately open modal for renaming/details
+  const createTask = sectionId =>
+    taskApi
+      .create(boardId, { sectionId })
+      .then(task => {
+        const updated = sections.map(s =>
+          s.id === sectionId ? { ...s, tasks: [task, ...s.tasks] } : s
+        )
+        updateAndNotify(updated)
+        setSelectedTask(task)
+      })
+      .catch(console.error)
+
+  const onUpdateTask = updatedTask => {
+    const updated = sections.map(s =>
+      s.id === updatedTask.section.id
+        ? { ...s, tasks: s.tasks.map(t => (t.id === updatedTask.id ? updatedTask : t)) }
+        : s
+    )
+    updateAndNotify(updated)
+  }
+
+  const onDeleteTask = deletedTask => {
+    const updated = sections.map(s =>
+      s.id === deletedTask.section.id
+        ? { ...s, tasks: s.tasks.filter(t => t.id !== deletedTask.id) }
+        : s
+    )
+    updateAndNotify(updated)
+  }
 
   return (
     <>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-        <Button onClick={() => {/* createSection */}}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, flexWrap: 'wrap' }}>
+        <Button size={isMobile ? 'small' : 'medium'} onClick={createSection}>
           Add section
         </Button>
-        <Typography variant='body2' fontWeight='700'>
-          {data.length} Sections
-        </Typography>
+        <Typography fontWeight={700}>{sections.length} Sections</Typography>
       </Box>
-      <Divider sx={{ mb: 1 }} />
+
+      <Divider sx={{ my: 1 }} />
+
       <DragDropContext onDragEnd={onDragEnd}>
-        <Box sx={{
-          display: 'flex',
-          flexDirection: isXs ? 'column' : 'row',
-          overflowX: isXs ? 'visible' : 'auto',
-          gap: 1,
-          px: 1
-        }}>
-          {data.map(section => (
-            <Droppable key={section.id} droppableId={section.id}>
-              {(provided) => (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            alignItems: 'flex-start',
+            overflowX: isMobile ? 'hidden' : 'auto',
+            '& > div': { flex: isMobile ? '1 1 auto' : '0 0 300px', m: 0.5 },
+          }}
+        >
+          {sections.map(sec => (
+            <Droppable key={sec.id} droppableId={sec.id}>
+              {provided => (
                 <Box
                   ref={provided.innerRef}
                   {...provided.droppableProps}
                   sx={{
-                    flex: isXs ? 'none' : '0 0 300px',
-                    width: isXs ? '100%' : 300,
-                    p: 1,
                     bgcolor: 'background.paper',
-                    borderRadius: 1
+                    borderRadius: 1,
+                    boxShadow: 1,
+                    p: 2,
+                    minWidth: 300,
+                    maxWidth: 300,
                   }}
                 >
-                  {/* section header with TextField, Add, Delete icons */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <TextField
+                      size="small"
+                      value={sec.title}
+                      onChange={e => renameSection(sec.id, e.target.value)}
+                      placeholder="Untitled"
+                      sx={{ flexGrow: 1, '& .MuiOutlinedInput-notchedOutline': { border: 'none' } }}
+                    />
+                    <IconButton size={isMobile ? 'small' : 'medium'} onClick={() => createTask(sec.id)}>
+                      <AddOutlinedIcon />
+                    </IconButton>
+                    <IconButton size={isMobile ? 'small' : 'medium'} onClick={() => deleteSection(sec.id)}>
+                      <DeleteOutlinedIcon />
+                    </IconButton>
+                  </Box>
+
+                  {sec.tasks.map((task, idx) => (
+                    <Draggable key={task.id} draggableId={task.id} index={idx}>
+                      {dragProvided => (
+                        <Card
+                          ref={dragProvided.innerRef}
+                          {...dragProvided.draggableProps}
+                          {...dragProvided.dragHandleProps}
+                          onClick={() => setSelectedTask(task)}
+                          sx={{ mb: 1, p: isMobile ? 1 : 2, cursor: 'grab' }}
+                        >
+                          <Typography noWrap>
+                            {task.title
+                              ? task.title
+                              : task.content
+                              ? task.content
+                                  .replace(/<[^>]+>/g, '')
+                                  .slice(0, 30) + '…'
+                              : 'Untitled'}
+                          </Typography>
+                        </Card>
+                      )}
+                    </Draggable>
+                  ))}
+
                   {provided.placeholder}
                 </Box>
               )}
@@ -92,12 +188,13 @@ const Kanban = props => {
           ))}
         </Box>
       </DragDropContext>
+
       <TaskModal
         task={selectedTask}
         boardId={boardId}
-        onClose={() => setSelectedTask(undefined)}
-        onUpdate={() => {/* onUpdateTask */}}
-        onDelete={() => {/* onDeleteTask */}}
+        onUpdate={onUpdateTask}
+        onDelete={onDeleteTask}
+        onClose={() => setSelectedTask(null)}
       />
     </>
   )
