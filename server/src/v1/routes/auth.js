@@ -36,10 +36,10 @@ router.post(
 
 router.post(
   '/login',
-  // Now login by email instead of username (or keep username if you choose)
-  body('email')
-    .isEmail()
-    .withMessage('Must be a valid email address'),
+  // Validate username (at least 3 characters)
+  body('username')
+    .isLength({ min: 3 })
+    .withMessage('Username must be at least 3 characters'),
   body('password')
     .isLength({ min: 8 })
     .withMessage('Password must be at least 8 characters'),
