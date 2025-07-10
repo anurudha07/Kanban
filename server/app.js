@@ -6,7 +6,7 @@ const cors = require('cors');
 
 const app = express();
 
-// 1) Define corsOptions once
+
 const corsOptions = {
   origin: [
 
@@ -17,10 +17,10 @@ const corsOptions = {
   optionsSuccessStatus: 200
 };
 
-// 2) Handle all preflight requests with those options
+
 app.options('*', cors(corsOptions));
 
-// 3) Then apply CORS to all routes
+
 app.use(cors(corsOptions));
 
 app.use(logger('dev'));
