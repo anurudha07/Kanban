@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import authApi from '../api/authApi'
 
-const contentWidth = 380
+const contentWidth = 340
 
 const Login = () => {
   const navigate = useNavigate()
@@ -54,8 +54,8 @@ const Login = () => {
       component="main"
       sx={{
         minHeight: '100vh',
-        pt: 4,
-        px: 2,
+        pt: 2,
+        px: 0,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -66,7 +66,7 @@ const Login = () => {
       <Typography
         variant="subtitle1"
         align="center"
-        sx={{ width: 368, mb: 4, color: 'text.secondary' }}
+        sx={{ width: 380, mb: 4, color: 'text.secondary' }}
       >
        Visualize Your Workflow to Maximize Efficiency. Access Your Tasks Anytime, Anywhere.
       </Typography>
