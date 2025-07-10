@@ -1,5 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { Box, IconButton, TextField, Typography, useTheme, useMediaQuery } from '@mui/material'
+import {
+  Box,
+  IconButton,
+  TextField,
+  Typography,
+  useTheme,
+  useMediaQuery
+} from '@mui/material'
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
 import StarBorderOutlinedIcon from '@mui/icons-material/StarBorderOutlined'
 import StarOutlinedIcon from '@mui/icons-material/StarOutlined'
@@ -8,8 +15,16 @@ import { useNavigate, useParams } from 'react-router-dom'
 import boardApi from '../api/boardApi'
 import EmojiPicker from '../components/common/EmojiPicker'
 import Kanban from '../components/common/Kanban'
-import { setBoards, updateBoard, removeBoard } from '../redux/features/boardSlice'
-import { setFavouriteList, updateFavourite, removeFavourite } from '../redux/features/favouriteSlice'
+import {
+  setBoards,
+  updateBoard,
+  removeBoard
+} from '../redux/features/boardSlice'
+import {
+  setFavouriteList,
+  updateFavourite,
+  removeFavourite
+} from '../redux/features/favouriteSlice'
 
 const Board = () => {
   const [title, setTitle] = useState('')
@@ -92,21 +107,19 @@ const Board = () => {
 
   // Delete board
   const onDelete = async () => {
-  dispatch(removeBoard(boardId))
-  dispatch(removeFavourite(boardId))
-  navigate('/')
-
-  try {
-    await boardApi.delete(boardId)
-    
-  } catch (err) {
-    console.error('Failed to delete board:', err)
+    dispatch(removeBoard(boardId))
+    dispatch(removeFavourite(boardId))
+    navigate('/')
+    try {
+      await boardApi.delete(boardId)
+    } catch (err) {
+      console.error('Failed to delete board:', err)
+    }
   }
-}
-
 
   return (
     <>
+      {/* Top bar */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', px: isMobile ? 1 : 5, py: 1 }}>
         <IconButton onClick={onToggleFav}>
           {fav
@@ -118,7 +131,8 @@ const Board = () => {
         </IconButton>
       </Box>
 
-      <Box sx={{ px: isMobile ? 1 : 5, py: isMobile ? 1 : 2 }}>
+      {/* Main content */}
+      <Box sx={{ px: isMobile ? 1 : 5, py: isMobile ? 1 : 2, position: 'relative' }}>
         <EmojiPicker icon={icon} onChange={onIconChange} />
 
         <TextField
@@ -136,8 +150,22 @@ const Board = () => {
             }
           }}
         />
+
+        {/* Absolutely positioned Saved badge on the right */}
         {justSaved && (
-          <Typography variant="caption" color="success.main" sx={{ mt: 0.5 }}>
+          <Typography
+            variant="caption"
+            color="success.main"
+            sx={{
+              position: 'absolute',
+              top: isMobile ? 82 : 88,
+              right: isMobile ? 40 : 100,
+              bgcolor: 'background.paper',
+              px: 0.5,
+              borderRadius: 0.5,
+              zIndex: 10
+            }}
+          >
             Saved!
           </Typography>
         )}
