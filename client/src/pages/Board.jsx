@@ -1,4 +1,3 @@
-// src/pages/Board.jsx
 import React, { useEffect, useState, useRef } from 'react'
 import { Box, IconButton, TextField, Typography, useTheme, useMediaQuery } from '@mui/material'
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
