@@ -73,3 +73,18 @@
     top: 40px !important;
   }
 
+/* Writing area: dark background with white text */
+.ck.ck-editor__main > .ck-editor__editable {
+  background-color: #121212 !important;
+  color: #ffffff !important;
+  border: none;
+  outline: none;
+}
+
+/* Focused state should not change it */
+.ck.ck-editor__main > .ck-editor__editable.ck-focused {
+  border: none;
+  background-color: #121212 !important;
+  color: #ffffff !important;
+}
+
