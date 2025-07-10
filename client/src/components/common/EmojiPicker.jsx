@@ -1,50 +1,81 @@
-import { Box, Typography, useTheme, useMediaQuery } from '@mui/material'
+// src/components/common/EmojiPicker.jsx
 import React, { useState, useEffect } from 'react'
+import {
+  Box,
+  IconButton,
+  Paper,
+  ClickAwayListener,
+  useTheme,
+  useMediaQuery
+} from '@mui/material'
 import { Picker } from 'emoji-mart'
 import 'emoji-mart/css/emoji-mart.css'
 
-const EmojiPicker = props => {
+const EmojiPicker = ({ icon, onChange }) => {
+  const [emoji, setEmoji] = useState(icon)
+  const [open, setOpen] = useState(false)
   const theme = useTheme()
-  const isXs = useMediaQuery(theme.breakpoints.down('sm'))
-  const [selectedEmoji, setSelectedEmoji] = useState()
-  const [isShowPicker, setIsShowPicker] = useState(false)
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   useEffect(() => {
-    setSelectedEmoji(props.icon)
-  }, [props.icon])
+    setEmoji(icon)
+  }, [icon])
 
-  const selectEmoji = (e) => {
-    const sym = e.unified.split('-')
-    const codesArray = sym.map(el => '0x' + el)
-    const emoji = String.fromCodePoint(...codesArray)
-    setIsShowPicker(false)
-    props.onChange(emoji)
+  const handleSelect = e => {
+    setEmoji(e.native)
+    setOpen(false)
+    onChange(e.native)
   }
 
-  const showPicker = () => setIsShowPicker(!isShowPicker)
-
   return (
-    <Box sx={{ position: 'relative', width: 'max-content' }}>
-      <Typography
-        variant='h3'
-        fontWeight='700'
-        sx={{ cursor: 'pointer' }}
-        onClick={showPicker}
+    <Box sx={{ position: 'relative', display: 'inline-block' }}>
+      <IconButton
+        onClick={() => setOpen(o => !o)}
+        size="small"
+        sx={{
+          border: '1px solid',
+          borderColor: 'divider',
+          width: isMobile ? 44 : 48,
+          height: isMobile ? 44 : 48,
+          fontSize: isMobile ? '1.5rem' : '1.75rem',
+          bgcolor: theme.palette.background.paper
+        }}
       >
-        {selectedEmoji}
-      </Typography>
-      <Box sx={{
-        display: isShowPicker ? 'block' : 'none',
-        position: 'absolute',
-        top: isXs ? 'auto' : '100%',
-        bottom: isXs ? 0 : 'auto',
-        left: isXs ? 0 : 'auto',
-        width: isXs ? '100vw' : 'auto',
-        height: isXs ? '50vh' : 'auto',
-        zIndex: 9999
-      }}>
-        <Picker theme='dark' onSelect={selectEmoji} showPreview={false} />
-      </Box>
+        {emoji || '😀'}
+      </IconButton>
+
+      {open && (
+        <ClickAwayListener onClickAway={() => setOpen(false)}>
+          <Paper
+            elevation={4}
+            sx={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              mt: 2,
+              width: isMobile ? '86vw' : 346,
+              maxHeight: isMobile ? '60vh' : '70vh',
+              overflow: 'auto',
+              zIndex: 2000,
+              borderRadius: 2,
+              // match your dark theme
+              bgcolor: theme.palette.mode === 'dark'
+                ? theme.palette.background.default
+                : theme.palette.background.paper
+            }}
+          >
+            <Picker
+              theme="dark"           // switch to dark theme
+              onSelect={handleSelect}
+              showPreview={false}
+              showSkinTones={false}
+              perLine={isMobile ? 8 : 9}
+              emojiSize={24}
+              title=""
+            />
+          </Paper>
+        </ClickAwayListener>
+      )}
     </Box>
   )
 }
