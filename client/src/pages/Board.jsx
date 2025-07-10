@@ -91,15 +91,19 @@ const Board = () => {
   }
 
   // Delete board
-  const onDelete = () => {
-    boardApi.delete(boardId)
-      .then(() => {
-        dispatch(removeBoard(boardId))
-        dispatch(removeFavourite(boardId))
-        navigate('/')
-      })
-      .catch(console.error)
+  const onDelete = async () => {
+  dispatch(removeBoard(boardId))
+  dispatch(removeFavourite(boardId))
+  navigate('/')
+
+  try {
+    await boardApi.delete(boardId)
+    
+  } catch (err) {
+    console.error('Failed to delete board:', err)
   }
+}
+
 
   return (
     <>
