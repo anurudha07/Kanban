@@ -1,4 +1,3 @@
-// src/components/common/Sidebar.jsx
 import React, { useState, useEffect } from 'react'
 import {
   Drawer,
