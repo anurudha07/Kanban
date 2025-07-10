@@ -62,7 +62,7 @@ const Login = () => {
       }}
     >
 
-      {/* Two-line tagline */}
+      
       <Typography
         variant="subtitle1"
         align="center"
