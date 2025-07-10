@@ -9,7 +9,8 @@ const app = express();
 // 1) Define corsOptions once
 const corsOptions = {
   origin: [
-    'http://localhost:3000',
+
+    'http://192.168.29.227:3000',
     'https://kanban-client-b8bj.onrender.com'
   ],
   credentials: true,
