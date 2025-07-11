@@ -45,19 +45,19 @@ This Kanban Board App provides a flexible, mobile‑responsive interface for org
 
 
 # Tech Stack
-Frontend
+Frontend: 
 
 React.js, Redux Toolkit, React Router, Material‑UI, React Beautiful DnD, CKEditor
 
-Backend
+Backend:
 
 Node.js, Express.js, Mongoose (MongoDB ODM)
 
-Authentication
+Authentication:
 
 JWT (via jsonwebtoken), cookie‑session
 
-Deployment
+Deployment:
 
 Render (or Heroku) for server; Vercel (or Netlify) for client
 
