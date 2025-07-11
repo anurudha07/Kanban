@@ -13,23 +13,24 @@ Secure signup & login using JSON Web Tokens (JWT).
 • Favorite boards for quick access
 • Emoji icons for visual customization
 
-Section Management
+## Section Management
 • Add, edit, and delete sections dynamically
 • Reorder sections via drag‑and‑drop
 
-Task Management
+## Task Management
 • Add, edit, and delete tasks within sections
 • Drag‑and‑drop tasks between sections & reorder
 • Rich text content for task descriptions (CKEditor)
 
-Responsive UI
+## Responsive UI
 • Permanent sidebar on desktop; hamburger menu on mobile
 • Horizontal scroll for Kanban columns on tablets/desktop
 • Vertical stacking of columns on small screens
 • Shrinking spinner, slim scrollbars, and compact modals for mobile
 
-Favorites 
+## Favorites & Fints
 • Mark boards as favorites
+• Apply Fonts and styles to your task contemts
 
 
 # Tech Stack
@@ -49,12 +50,15 @@ Installation
 Clone the repo
 
 # Backend
-cd server && npm install
+cd server 
+npm install 
 
 # Frontend
-cd ../client && npm install
+cd ../client 
+npm install && npm run build 
 
-Configure environment variables
+# Configure environment variables
+
 In server/.env:
 
 MONGODB_URL=your_mongodb_connection_string
@@ -75,6 +79,7 @@ npm start
 # Start frontend
 cd client
 npm start
+
 Open
 Visit http://localhost:3000 in your browser.
 
