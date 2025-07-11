@@ -109,4 +109,4 @@ This project is licensed under the MIT License.
 # Contact
 Anurudha Sarkar
 📧 anurudhs567@gmail.com
-🔗 GitHub Repository
+LinkedIn - https://www.linkedin.com/in/anurudha-sarkar-3b77ab228/
