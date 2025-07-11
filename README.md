@@ -8,7 +8,7 @@ This Kanban Board App provides a flexible, mobile‑responsive interface for org
 User Authentication
 Secure signup & login using JSON Web Tokens (JWT).
 
-Board Management
+## Board Management
 • Create, rename, and delete boards
 • Favorite boards for quick access
 • Emoji icons for visual customization
