@@ -19,39 +19,48 @@ This Kanban Board App provides a flexible, mobile‑responsive interface for org
 
 ## Section Management
 • Add, edit, and delete sections dynamically
+
 • Reorder sections via drag‑and‑drop
 
 ## Task Management
 • Add, edit, and delete tasks within sections
+
 • Drag‑and‑drop tasks between sections & reorder
+
 • Rich text content for task descriptions (CKEditor)
 
 ## Responsive UI
 • Permanent sidebar on desktop; hamburger menu on mobile
+
 • Horizontal scroll for Kanban columns on tablets/desktop
+
 • Vertical stacking of columns on small screens
+
 • Shrinking spinner, slim scrollbars, and compact modals for mobile
 
 ## Favorites & Fints
 • Mark boards as favorites
+
 • Apply Fonts and styles to your task contemts
 
 
 # Tech Stack
 Frontend
+
 React.js, Redux Toolkit, React Router, Material‑UI, React Beautiful DnD, CKEditor
 
 Backend
+
 Node.js, Express.js, Mongoose (MongoDB ODM)
 
 Authentication
+
 JWT (via jsonwebtoken), cookie‑session
 
 Deployment
+
 Render (or Heroku) for server; Vercel (or Netlify) for client
 
-Installation
-Clone the repo
 
 # Backend
 cd server 
@@ -66,8 +75,11 @@ npm install && npm run build
 In server/.env:
 
 MONGODB_URL=your_mongodb_connection_string
+
 TOKEN_SECRET_KEY=your_jwt_secret
+
 SESSION_SECRET=your_cookie_secret
+
 PORT=5000
 
 
