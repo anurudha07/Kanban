@@ -5,13 +5,17 @@ Kanban is build using Redux & MERN stack
 This Kanban Board App provides a flexible, mobile‑responsive interface for organizing workflows. Create boards, add dynamic sections, and drag‑and‑drop task cards to reflect your process. With real‑time updates, emoji icons, and favorites, it’s your personal productivity hub—anywhere, anytime.
 
 # Features
-User Authentication
-Secure signup & login using JSON Web Tokens (JWT).
+
+## User Authentication
+• Secure signup & login using JSON Web Tokens (JWT).
 
 ## Board Management
 • Create, rename, and delete boards
+
 • Favorite boards for quick access
+
 • Emoji icons for visual customization
+
 
 ## Section Management
 • Add, edit, and delete sections dynamically
