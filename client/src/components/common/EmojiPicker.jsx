@@ -27,7 +27,7 @@ const EmojiPicker = ({ icon, onChange }) => {
     onChange(e.native)
   }
 
-
+  // We’ll anchor the Popper to this box
   const anchorRef = React.useRef(null)
 
   return (
