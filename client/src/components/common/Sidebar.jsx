@@ -59,19 +59,14 @@ const Sidebar = () => {
     navigate('/login')
   }
 
+  // Create new board directly to prevent double navigation and default placeholder
   const handleAdd = () => {
-    const placeholder = { id: `temp-${Date.now()}`, title: 'Untitled', icon: '' }
-    dispatch(addBoard(placeholder))
-    navigate(`/boards/${placeholder.id}`)
     boardApi.create()
-      .then(real => {
-        dispatch(updateBoard(real))
-        navigate(`/boards/${real.id}`)
+      .then(newBoard => {
+        dispatch(addBoard(newBoard))
+        navigate(`/boards/${newBoard.id}`)
       })
-      .catch(() => {
-        dispatch(removeBoard(placeholder.id))
-        navigate('/')
-      })
+      .catch(console.error)
   }
 
   const onDragEnd = ({ source, destination }) => {
