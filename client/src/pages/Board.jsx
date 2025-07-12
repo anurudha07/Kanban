@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Box,
   IconButton,
@@ -6,13 +6,12 @@ import {
   Typography,
   useTheme,
   useMediaQuery,
-  Fade,
-  CircularProgress
+  Fade
 } from '@mui/material'
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
 import StarBorderOutlinedIcon from '@mui/icons-material/StarBorderOutlined'
 import StarOutlinedIcon from '@mui/icons-material/StarOutlined'
-import { useDispatch, useSelector, shallowEqual } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
 import boardApi from '../api/boardApi'
 import EmojiPicker from '../components/common/EmojiPicker'
@@ -35,91 +34,121 @@ const Board = () => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
 
-  // Global boards/favourites
-  const allBoards = useSelector(state => state.board.value, shallowEqual)
-  const favourites = useSelector(state => state.favourites.value, shallowEqual)
+  // Global boards state
+  const allBoards = useSelector(s => s.board.value || [])
+  const favourites = useSelector(s => s.favourites.value)
 
-  // Local state
-  const [board, setBoard] = useState(null)
-  const [saving, setSaving] = useState(false)
+  // Local UI state
+  const [title, setTitle] = useState('')
+  const [desc, setDesc] = useState('')
+  const [sections, setSections] = useState([])
+  const [fav, setFav] = useState(false)
+  const [icon, setIcon] = useState('')
   const [justSaved, setJustSaved] = useState(false)
+  const [loaded, setLoaded] = useState(false)
 
   const titleTimer = useRef()
   const descTimer = useRef()
   const iconTimer = useRef()
 
-  // Load board data once
+  // Load board data
   useEffect(() => {
+    setLoaded(false)
     boardApi.getOne(boardId)
-      .then(r => setBoard(r))
+      .then(r => {
+        setTitle(r.title || '')
+        setDesc(r.description || '')
+        setSections(r.sections || [])
+        setFav(r.favourite)
+        setIcon(r.icon)
+      })
       .catch(console.error)
+      .finally(() => setLoaded(true))
   }, [boardId])
 
-  // Debounced save handler
-  const save = useCallback((changes) => {
-    setSaving(true)
+  // Debounced save
+  const save = changes => {
     boardApi.update(boardId, changes)
       .then(updated => {
-        setBoard(prev => ({ ...prev, ...changes }))
         dispatch(updateBoard(updated))
-        if ('favourite' in changes) {
-          dispatch(updateFavourite(updated))
-        }
+        dispatch(updateFavourite(updated))
+        return boardApi.getAll()
       })
+      .then(all => dispatch(setBoards(all)))
       .catch(console.error)
-      .finally(() => {
-        setSaving(false)
-        setJustSaved(true)
-        clearTimeout(titleTimer.current)
-        titleTimer.current = setTimeout(() => setJustSaved(false), 1500)
-      })
-  }, [boardId, dispatch])
+
+    setJustSaved(true)
+    clearTimeout(titleTimer.current)
+    titleTimer.current = setTimeout(() => setJustSaved(false), 1500)
+  }
 
   const onTitleChange = e => {
-    const title = e.target.value
-    setBoard(prev => ({ ...prev, title }))
+    const v = e.target.value
+    setTitle(v)
     clearTimeout(titleTimer.current)
-    titleTimer.current = setTimeout(() => save({ title }), 200)
+    titleTimer.current = setTimeout(() => save({ title: v }), 200)
   }
 
   const onDescChange = e => {
-    const description = e.target.value
-    setBoard(prev => ({ ...prev, description }))
+    const v = e.target.value
+    setDesc(v)
     clearTimeout(descTimer.current)
-    descTimer.current = setTimeout(() => save({ description }), 200)
+    descTimer.current = setTimeout(() => save({ description: v }), 200)
   }
 
   const onIconChange = newIcon => {
-    setBoard(prev => ({ ...prev, icon: newIcon }))
+    setIcon(newIcon)
     clearTimeout(iconTimer.current)
     iconTimer.current = setTimeout(() => save({ icon: newIcon }), 200)
   }
 
+  // Optimistic favourite toggle
   const onToggleFav = () => {
-    const favourite = !board.favourite
-    setBoard(prev => ({ ...prev, favourite }))
-    save({ favourite })
+    const nf = !fav
+    // 1) Update local state and Redux immediately
+    setFav(nf)
+    if (nf) {
+      // create a minimal board object for favourites list
+      const thisBoard = { id: boardId, title, description: desc, icon, favourite: true }
+      dispatch(setFavouriteList([thisBoard, ...favourites]))
+    } else {
+      dispatch(removeFavourite(boardId))
+    }
+
+    // 2) Fire-and-forget API call; reconcile on error
+    boardApi.update(boardId, { favourite: nf })
+      .then(updated => {
+        dispatch(updateBoard(updated))
+      })
+      .catch(err => {
+        console.error('Failed to toggle favourite:', err)
+        // rollback
+        setFav(!nf)
+        if (nf) {
+          dispatch(removeFavourite(boardId))
+        } else {
+          const thisBoard = { id: boardId, title, description: desc, icon, favourite: true }
+          dispatch(setFavouriteList([thisBoard, ...favourites]))
+        }
+      })
   }
 
   const onDelete = () => {
     dispatch(removeBoard(boardId))
     dispatch(removeFavourite(boardId))
-    boardApi.delete(boardId)
-      .catch(console.error)
-      .finally(() => navigate('/'))
+    navigate('/')
+    boardApi.delete(boardId).catch(console.error)
   }
 
-  if (!board) {
-    return <Box sx={{ display:'flex', justifyContent:'center', mt:4 }}><CircularProgress /></Box>
-  }
+  if (!loaded) return null
 
   return (
     <Fade in timeout={200}>
       <Box>
         {/* Top Bar */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', px: isMobile ? 1 : 5, py: 1 }}>
-          <IconButton onClick={onToggleFav} disabled={saving}>
-            {board.favourite ? <StarOutlinedIcon color="warning" /> : <StarBorderOutlinedIcon />}
+          <IconButton onClick={onToggleFav}>
+            {fav ? <StarOutlinedIcon color="warning" /> : <StarBorderOutlinedIcon />}
           </IconButton>
           <IconButton color="error" onClick={onDelete}>
             <DeleteOutlinedIcon />
@@ -127,14 +156,23 @@ const Board = () => {
         </Box>
 
         {/* Content */}
-        <Box sx={{ px: isMobile ? 1 : 5, py: isMobile ? 1 : 2, position: 'relative', overflowY: 'auto' }}>
-          <EmojiPicker icon={board.icon} onChange={onIconChange} />
+        <Box
+          sx={{
+            px: isMobile ? 1 : 5,
+            py: isMobile ? 1 : 2,
+            position: 'relative',
+            overflowY: 'auto',
+            scrollbarWidth: 'none',
+            '&::-webkit-scrollbar': { display: 'none' }
+          }}
+        >
+          <EmojiPicker icon={icon} onChange={onIconChange} />
 
           <TextField
             fullWidth
             variant="outlined"
             placeholder="Untitled"
-            value={board.title}
+            value={title}
             onChange={onTitleChange}
             sx={{ mt: 1, '& .MuiOutlinedInput-notchedOutline': { border: 'none' }, '& .MuiInputBase-input': { fontSize: isMobile ? '1.5rem' : '2rem', fontWeight: 700 } }}
           />
@@ -153,14 +191,14 @@ const Board = () => {
             fullWidth
             variant="outlined"
             multiline
-            value={board.description}
+            placeholder=""
+            value={desc}
             onChange={onDescChange}
             sx={{ mt: 1, '& .MuiOutlinedInput-notchedOutline': { border: 'none' }, '& .MuiInputBase-input': { fontSize: isMobile ? '0.75rem' : '0.8rem' } }}
           />
 
           <Box sx={{ mt: 2 }}>
-            {/* Memoized Kanban to prevent unnecessary re-renders */}
-            <Kanban data={board.sections} boardId={boardId} onSectionsChange={sections => save({ sections })} />
+            <Kanban data={sections} boardId={boardId} onSectionsChange={setSections} />
           </Box>
         </Box>
       </Box>
@@ -168,4 +206,4 @@ const Board = () => {
   )
 }
 
-export default React.memo(Board)
+export default Board
