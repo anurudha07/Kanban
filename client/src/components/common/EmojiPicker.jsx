@@ -3,6 +3,7 @@ import {
   Box,
   IconButton,
   Paper,
+  Popper,
   ClickAwayListener,
   useTheme,
   useMediaQuery
@@ -26,8 +27,11 @@ const EmojiPicker = ({ icon, onChange }) => {
     onChange(e.native)
   }
 
+  // We’ll anchor the Popper to this box
+  const anchorRef = React.useRef(null)
+
   return (
-    <Box sx={{ position: 'relative', display: 'inline-block' }}>
+    <Box ref={anchorRef} sx={{ position: 'relative', display: 'inline-block' }}>
       <IconButton
         onClick={() => setOpen(o => !o)}
         size="small"
@@ -43,28 +47,31 @@ const EmojiPicker = ({ icon, onChange }) => {
         {emoji || '😀'}
       </IconButton>
 
-      {open && (
+      <Popper
+        open={open}
+        anchorEl={anchorRef.current}
+        placement="bottom-start"
+        disablePortal={false}
+        modifiers={[{ name: 'preventOverflow', enabled: true, options: { padding: 16 } }]}
+        sx={{ zIndex: theme.zIndex.modal + 1 }}
+      >
         <ClickAwayListener onClickAway={() => setOpen(false)}>
           <Paper
             elevation={4}
             sx={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              mt: 2,
+              mt: 1,
               width: isMobile ? '86vw' : 346,
               maxHeight: isMobile ? '60vh' : '70vh',
               overflow: 'auto',
-              zIndex: 2000,
               borderRadius: 2,
-              // match your dark theme
-              bgcolor: theme.palette.mode === 'dark'
-                ? theme.palette.background.default
-                : theme.palette.background.paper
+              bgcolor:
+                theme.palette.mode === 'dark'
+                  ? theme.palette.background.default
+                  : theme.palette.background.paper
             }}
           >
             <Picker
-              theme="dark"           
+              theme="dark"
               onSelect={handleSelect}
               showPreview={false}
               showSkinTones={false}
@@ -74,7 +81,7 @@ const EmojiPicker = ({ icon, onChange }) => {
             />
           </Paper>
         </ClickAwayListener>
-      )}
+      </Popper>
     </Box>
   )
 }
