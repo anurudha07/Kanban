@@ -1,11 +1,12 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Box,
   IconButton,
   TextField,
   Typography,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Fade
 } from '@mui/material'
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
 import StarBorderOutlinedIcon from '@mui/icons-material/StarBorderOutlined'
@@ -27,24 +28,29 @@ import {
 } from '../redux/features/favouriteSlice'
 
 const Board = () => {
-  const [title, setTitle] = useState('')
-  const [desc, setDesc] = useState('')
-  const [sections, setSections] = useState([])
-  const [fav, setFav] = useState(false)
-  const [icon, setIcon] = useState('')
-  const [justSaved, setJustSaved] = useState(false)
-
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
-  const { boardId } = useParams()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const { boardId } = useParams()
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
+
+  // Grab existing data from Redux immediately
+  const allBoards = useSelector(s => s.board.value || [])
+  const board = allBoards.find(b => b.id === boardId) || {}
   const favourites = useSelector(s => s.favourites.value)
 
-  const titleTimer = useRef()
-  const iconTimer  = useRef()
+  const [title, setTitle] = useState(board.title || '')
+  const [desc, setDesc] = useState(board.description || '')
+  const [sections, setSections] = useState(board.sections || [])
+  const [fav, setFav] = useState(board.favourite || false)
+  const [icon, setIcon] = useState(board.icon || '')
+  const [justSaved, setJustSaved] = useState(false)
 
-  // Load board data on mount or when boardId changes
+  const titleTimer = useRef()
+  const descTimer = useRef()
+  const iconTimer = useRef()
+
+  // Fetch latest in background but render immediately
   useEffect(() => {
     boardApi.getOne(boardId)
       .then(r => {
@@ -57,7 +63,6 @@ const Board = () => {
       .catch(console.error)
   }, [boardId])
 
-  // Save changes then re-fetch full boards list
   const save = changes =>
     boardApi.update(boardId, changes)
       .then(updated => {
@@ -67,32 +72,35 @@ const Board = () => {
       })
       .then(all => {
         dispatch(setBoards(all))
+        // show saved message
         setJustSaved(true)
         setTimeout(() => setJustSaved(false), 1500)
       })
       .catch(console.error)
 
-  // Title change handler
   const onTitleChange = e => {
     const v = e.target.value
     setTitle(v)
     dispatch(updateBoard({ id: boardId, title: v }))
-
     clearTimeout(titleTimer.current)
-    titleTimer.current = setTimeout(() => save({ title: v }), 500)
+    titleTimer.current = setTimeout(() => save({ title: v }), 300)
   }
 
-  // Emoji change handler
+  const onDescChange = e => {
+    const v = e.target.value
+    setDesc(v)
+    clearTimeout(descTimer.current)
+    descTimer.current = setTimeout(() => save({ description: v }), 300)
+  }
+
   const onIconChange = newIcon => {
     setIcon(newIcon)
     dispatch(updateBoard({ id: boardId, icon: newIcon }))
     dispatch(updateFavourite({ id: boardId, icon: newIcon }))
-
     clearTimeout(iconTimer.current)
-    iconTimer.current = setTimeout(() => save({ icon: newIcon }), 500)
+    iconTimer.current = setTimeout(() => save({ icon: newIcon }), 300)
   }
 
-  // Toggle favourite status
   const onToggleFav = () => {
     const nf = !fav
     setFav(nf)
@@ -105,96 +113,74 @@ const Board = () => {
       .catch(() => setFav(fav))
   }
 
-  // Delete board
-  const onDelete = async () => {
+  const onDelete = () => {
     dispatch(removeBoard(boardId))
     dispatch(removeFavourite(boardId))
     navigate('/')
-    try {
-      await boardApi.delete(boardId)
-    } catch (err) {
-      console.error('Failed to delete board:', err)
-    }
+    boardApi.delete(boardId).catch(console.error)
   }
 
   return (
-    <>
-      {/* Top bar */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', px: isMobile ? 1 : 5, py: 1 }}>
-        <IconButton onClick={onToggleFav}>
-          {fav
-            ? <StarOutlinedIcon color="warning" />
-            : <StarBorderOutlinedIcon />}
-        </IconButton>
-        <IconButton color="error" onClick={onDelete}>
-          <DeleteOutlinedIcon />
-        </IconButton>
-      </Box>
+    <Fade in timeout={200}>
+      <Box>
+        {/* Top Bar */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', px: isMobile ? 1 : 5, py: 1 }}>
+          <IconButton onClick={onToggleFav}>
+            {fav ? <StarOutlinedIcon color="warning" /> : <StarBorderOutlinedIcon />}
+          </IconButton>
+          <IconButton color="error" onClick={onDelete}>
+            <DeleteOutlinedIcon />
+          </IconButton>
+        </Box>
 
-      {/* Main content */}
-      <Box sx={{ px: isMobile ? 1 : 5, py: isMobile ? 1 : 2, position: 'relative' }}>
-        <EmojiPicker icon={icon} onChange={onIconChange} />
-
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Untitled"
-          value={title}
-          onChange={onTitleChange}
+        {/* Content */}
+        <Box
           sx={{
-            mt: 1,
-            '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
-            '& .MuiInputBase-input': {
-              fontSize: isMobile ? '1.5rem' : '2rem',
-              fontWeight: 700
-            }
+            px: isMobile ? 1 : 5,
+            py: isMobile ? 1 : 2,
+            position: 'relative',
+            overflowY: 'auto',
+            scrollbarWidth: 'none',
+            '&::-webkit-scrollbar': { display: 'none' }
           }}
-        />
+        >
+          <EmojiPicker icon={icon} onChange={onIconChange} />
 
-        {/* Absolutely positioned Saved badge on the right */}
-        {justSaved && (
-          <Typography
-            variant="caption"
-            color="success.main"
-            sx={{
-              position: 'absolute',
-              top: isMobile ? 82 : 88,
-              right: isMobile ? 40 : 100,
-              bgcolor: 'background.paper',
-              px: 0.5,
-              borderRadius: 0.5,
-              zIndex: 10
-            }}
-          >
-            Saved!
-          </Typography>
-        )}
-
-        <TextField
-          fullWidth
-          variant="outlined"
-          multiline
-          placeholder="Add a description"
-          value={desc}
-          onChange={e => setDesc(e.target.value)}
-          sx={{
-            mt: 1,
-            '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
-            '& .MuiInputBase-input': {
-              fontSize: isMobile ? '0.75rem' : '0.8rem'
-            }
-          }}
-        />
-
-        <Box sx={{ mt: 2 }}>
-          <Kanban
-            data={sections}
-            boardId={boardId}
-            onSectionsChange={setSections}
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Untitled"
+            value={title}
+            onChange={onTitleChange}
+            sx={{ mt: 1, '& .MuiOutlinedInput-notchedOutline': { border: 'none' }, '& .MuiInputBase-input': { fontSize: isMobile ? '1.5rem' : '2rem', fontWeight: 700 } }}
           />
+
+          {justSaved && (
+            <Typography
+              variant="caption"
+              color="success.main"
+              sx={{ position: 'absolute', top: isMobile ? 82 : 88, right: isMobile ? 40 : 100, bgcolor: 'background.paper', px: 0.5, borderRadius: 0.5 }}
+            >
+              Saved!
+            </Typography>
+          )}
+
+          <TextField
+            fullWidth
+            variant="outlined"
+            multiline
+            placeholder={`Add description here\n🟢 You can add multiline description\n🟢 Let's start...`}
+            value={desc}
+            onChange={onDescChange}
+            sx={{ mt: 1, '& .MuiOutlinedInput-notchedOutline': { border: 'none' }, '& .MuiInputBase-input': { fontSize: isMobile ? '0.75rem' : '0.8rem' } }}
+          />
+
+          <Box sx={{ mt: 2 }}>
+            <Kanban data={sections} boardId={boardId} onSectionsChange={setSections} />
+          </Box>
         </Box>
       </Box>
-    </>
+    </Fade>
   )
 }
 
