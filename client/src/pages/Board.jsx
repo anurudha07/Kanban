@@ -34,71 +34,72 @@ const Board = () => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
 
-  // Grab existing data from Redux immediately
+  // Global boards state
   const allBoards = useSelector(s => s.board.value || [])
-  const board = allBoards.find(b => b.id === boardId) || {}
   const favourites = useSelector(s => s.favourites.value)
 
-  const [title, setTitle] = useState(board.title || '')
-  const [desc, setDesc] = useState(board.description || '')
-  const [sections, setSections] = useState(board.sections || [])
-  const [fav, setFav] = useState(board.favourite || false)
-  const [icon, setIcon] = useState(board.icon || '')
+  // Local UI state
+  const [title, setTitle] = useState('')
+  const [desc, setDesc] = useState('')
+  const [sections, setSections] = useState([])
+  const [fav, setFav] = useState(false)
+  const [icon, setIcon] = useState('')
   const [justSaved, setJustSaved] = useState(false)
+  const [loaded, setLoaded] = useState(false)
 
   const titleTimer = useRef()
   const descTimer = useRef()
   const iconTimer = useRef()
 
-  // Fetch latest in background but render immediately
+  // Load board data
   useEffect(() => {
+    setLoaded(false)
     boardApi.getOne(boardId)
       .then(r => {
-        setTitle(r.title)
+        setTitle(r.title || '')
         setDesc(r.description || '')
         setSections(r.sections || [])
         setFav(r.favourite)
         setIcon(r.icon)
       })
       .catch(console.error)
+      .finally(() => setLoaded(true))
   }, [boardId])
 
-  const save = changes =>
+  // Debounced save
+  const save = changes => {
     boardApi.update(boardId, changes)
       .then(updated => {
         dispatch(updateBoard(updated))
         dispatch(updateFavourite(updated))
         return boardApi.getAll()
       })
-      .then(all => {
-        dispatch(setBoards(all))
-        // show saved message
-        setJustSaved(true)
-        setTimeout(() => setJustSaved(false), 1500)
-      })
+      .then(all => dispatch(setBoards(all)))
       .catch(console.error)
+
+    setJustSaved(true)
+    clearTimeout(titleTimer.current)
+    titleTimer.current = setTimeout(() => setJustSaved(false), 1500)
+  }
 
   const onTitleChange = e => {
     const v = e.target.value
     setTitle(v)
-    dispatch(updateBoard({ id: boardId, title: v }))
     clearTimeout(titleTimer.current)
-    titleTimer.current = setTimeout(() => save({ title: v }), 300)
+    titleTimer.current = setTimeout(() => save({ title: v }), 200)
   }
 
   const onDescChange = e => {
     const v = e.target.value
     setDesc(v)
     clearTimeout(descTimer.current)
-    descTimer.current = setTimeout(() => save({ description: v }), 300)
+    descTimer.current = setTimeout(() => save({ description: v }), 200)
   }
 
   const onIconChange = newIcon => {
     setIcon(newIcon)
-    dispatch(updateBoard({ id: boardId, icon: newIcon }))
-    dispatch(updateFavourite({ id: boardId, icon: newIcon }))
     clearTimeout(iconTimer.current)
-    iconTimer.current = setTimeout(() => save({ icon: newIcon }), 300)
+    iconTimer.current = setTimeout(() => save({ icon: newIcon }), 200)
   }
 
   const onToggleFav = () => {
@@ -108,7 +109,7 @@ const Board = () => {
       .then(updated => {
         dispatch(updateBoard(updated))
         if (nf) dispatch(setFavouriteList([updated, ...favourites]))
-        else   dispatch(removeFavourite(updated.id))
+        else dispatch(removeFavourite(updated.id))
       })
       .catch(() => setFav(fav))
   }
@@ -119,6 +120,8 @@ const Board = () => {
     navigate('/')
     boardApi.delete(boardId).catch(console.error)
   }
+
+  if (!loaded) return null
 
   return (
     <Fade in timeout={200}>
@@ -169,7 +172,7 @@ const Board = () => {
             fullWidth
             variant="outlined"
             multiline
-            placeholder={`Add description here\n🟢 You can add multiline description\n🟢 Let's start...`}
+            placeholder="" // no default placeholder
             value={desc}
             onChange={onDescChange}
             sx={{ mt: 1, '& .MuiOutlinedInput-notchedOutline': { border: 'none' }, '& .MuiInputBase-input': { fontSize: isMobile ? '0.75rem' : '0.8rem' } }}
