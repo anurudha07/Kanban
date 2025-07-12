@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   Drawer,
   AppBar,
@@ -29,13 +29,13 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 
 import boardApi from '../../api/boardApi'
-import { setBoards, addBoard, updateBoard, removeBoard } from '../../redux/features/boardSlice'
+import { setBoards, addBoard, updateBoard } from '../../redux/features/boardSlice'
 import { setFavouriteList } from '../../redux/features/favouriteSlice'
 
-const HideOnScroll = ({ children }) => {
+const HideOnScroll = React.memo(({ children }) => {
   const trigger = useScrollTrigger()
   return <Slide appear={false} direction="down" in={!trigger}>{children}</Slide>
-}
+})
 
 const Sidebar = () => {
   const theme = useTheme()
@@ -46,105 +46,153 @@ const Sidebar = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { boardId } = useParams()
-  const boards = useSelector(s => s.board.value || [])
-  const favourites = useSelector(s => s.favourites.value || [])
+  const boards = useSelector(state => state.board.value || [])
+  const favourites = useSelector(state => state.favourites.value || [])
 
   useEffect(() => {
-    boardApi.getAll().then(res => dispatch(setBoards(res))).catch(console.error)
-    boardApi.getFavourites().then(res => dispatch(setFavouriteList(res))).catch(console.error)
-  }, [dispatch])
-
-  const handleLogout = () => {
-    localStorage.removeItem('token')
-    navigate('/login')
-  }
-
-  // Create new board directly to prevent double navigation and default placeholder
-  const handleAdd = () => {
-    boardApi.create()
-      .then(newBoard => {
-        dispatch(addBoard(newBoard))
-        navigate(`/boards/${newBoard.id}`)
+    Promise.all([boardApi.getAll(), boardApi.getFavourites()])
+      .then(([all, favs]) => {
+        dispatch(setBoards(all))
+        dispatch(setFavouriteList(favs))
       })
       .catch(console.error)
-  }
+  }, [dispatch])
 
-  const onDragEnd = ({ source, destination }) => {
+  const handleAdd = useCallback(() => {
+    boardApi.create()
+      .then(realBoard => {
+        dispatch(addBoard(realBoard))
+        navigate(`/boards/${realBoard.id}`)
+      })
+      .catch(console.error)
+  }, [dispatch, navigate])
+
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem('token')
+    navigate('/login')
+  }, [navigate])
+
+  const onDragEnd = useCallback(({ source, destination }) => {
     if (!destination) return
-    const updated = Array.from(boards)
-    const [moved] = updated.splice(source.index, 1)
-    updated.splice(destination.index, 0, moved)
-    dispatch(setBoards(updated))
-    boardApi.updatePosition({ boards: updated }).catch(console.error)
-  }
+    const reordered = Array.from(boards)
+    const [moved] = reordered.splice(source.index, 1)
+    reordered.splice(destination.index, 0, moved)
+    dispatch(setBoards(reordered))
+    boardApi.updatePosition({ boards: reordered }).catch(console.error)
+  }, [boards, dispatch])
 
-  const filterBoards = list =>
-    list.filter(b => b.title.toLowerCase().includes(search.toLowerCase()))
+  const filteredFavourites = useMemo(
+    () => favourites.filter(b => b.title.toLowerCase().includes(search.toLowerCase())),
+    [favourites, search]
+  )
+  const filteredBoards = useMemo(
+    () => boards.filter(b => b.title.toLowerCase().includes(search.toLowerCase())),
+    [boards, search]
+  )
 
-  const drawerWidth = 280
+  const drawerWidth = 285
 
   const content = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: theme.palette.background.paper }}>
-      <Box
-        sx={{
-          flexGrow: 1,
-          overflowY: 'auto',
-          px: 1,
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          '&::-webkit-scrollbar': { width: 0, height: 0 }
-        }}
-      >
-        <Box sx={{ m: 2, p: '4px 8px', display: 'flex', alignItems: 'center', bgcolor: alpha(theme.palette.primary.main, 0.1), borderRadius: 1 }}>
-          <SearchIcon sx={{ color: theme.palette.primary.main, mr: 1 }} />
-          <InputBase placeholder="Search boards…" value={search} onChange={e => setSearch(e.target.value)} fullWidth sx={{ fontSize: '0.8rem' }} />
-        </Box>
+  <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: theme.palette.background.paper }}>
+    {/* Sticky header: search, favourites, private */}
+    <Box sx={{ 
+      position: 'sticky',
+      top: 0,
+      zIndex: 2,
+      bgcolor: theme.palette.background.paper,
+      pt: 0,
+      pb: 0.5
+    }}>
+      {/* Search */}
+      <Box sx={{
+        mx: 2.2,
+        my: 2,
+        px: 1,
+        py: 0.6,
+        display: 'flex',
+        alignItems: 'center',
+        height: 40, 
+        bgcolor: alpha(theme.palette.primary.main, 0),
+        borderRadius: 1
+      }}>
+        <SearchIcon sx={{ color: theme.palette.primary.main, mr: 1 }} />
+        <InputBase
+          placeholder="Search boards…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          fullWidth
+          sx={{ fontSize: '0.9rem', lineHeight: 1 }}
+        />
+      </Box>
 
-        <Typography sx={{ mx: 3, mt: 1, mb: 0.5, fontWeight: 600, fontSize: '0.8rem', color: theme.palette.text.secondary }}>
+        <Typography sx={{ mx: 2.8, mt: 1, mb: 0.5, fontWeight: 400, fontSize: '0.8rem', color: theme.palette.text.secondary }}>
           FAVOURITES
         </Typography>
-        <List dense sx={{ px: 1 }}>
-          {filterBoards(favourites).map(b => (
-            <ListItem
-              key={b.id}
-              component={Link}
-              to={`/boards/${b.id}`}
-              button
-              selected={b.id === boardId}
-              sx={{ mx: 0, borderRadius: 50 }}
-            >
-              <ListItemIcon><StarIcon fontSize="small" /></ListItemIcon>
-              <ListItemText primary={b.title} primaryTypographyProps={{ noWrap: true, variant: 'body2' }} />
-            </ListItem>
-          ))}
-        </List>
+        <Box sx={{ px: 3, maxHeight: 116, overflowY: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
+          <List dense>
+            {filteredFavourites.map(b => (
+              <ListItem
+                key={b.id}
+                component={Link}
+                to={`/boards/${b.id}`}
+                button
+                selected={b.id === boardId}
+                sx={{
+                  borderRadius: 50,
+                  '&:hover': {
+                    bgcolor: '#000000', 
+                    color: '#fff',
+                    '& .MuiListItemIcon-root, & .MuiListItemText-primary': {
+                     color: '#fff',
+                   },
+                 }
+                }}
+              >
+                <ListItemIcon><StarIcon fontSize="small" /></ListItemIcon>
+                <ListItemText primary={b.title} primaryTypographyProps={{ noWrap: true, variant: 'body2' }} />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
 
         <Divider sx={{ my: 1 }} />
-
-        <Box sx={{ px: 3, py: 1, display: 'flex', alignItems: 'center' }}>
-          <Typography sx={{ flexGrow: 1, fontWeight: 600, fontSize: '0.8rem', color: theme.palette.text.secondary }}>
+        <Box sx={{ px: 3, py: 0.5, display: 'flex', alignItems: 'center' }}>
+          <Typography sx={{ flexGrow: 1, fontWeight: 400, fontSize: '0.8rem', color: theme.palette.text.secondary }}>
             PRIVATE
           </Typography>
           <IconButton onClick={handleAdd} size="small"><AddIcon /></IconButton>
         </Box>
+      </Box>
 
+      {/* Scrollable boards list */}
+      <Box sx={{ flexGrow: 1, overflowY: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="boards">
             {provided => (
-              <List ref={provided.innerRef} {...provided.droppableProps} dense>
-                {filterBoards(boards).map((b, i) => (
+              <List ref={provided.innerRef} {...provided.droppableProps} dense sx={{ px: 1.5, pt: 0 }}>
+                {filteredBoards.map((b, i) => (
                   <Draggable key={b.id} draggableId={b.id} index={i}>
                     {prov => (
                       <ListItem
-                        ref={prov.innerRef}
-                        {...prov.draggableProps}
-                        {...prov.dragHandleProps}
-                        component={Link}
-                        to={`/boards/${b.id}`}
-                        button
-                        selected={b.id === boardId}
-                        sx={{ mx: 0, borderRadius: 50 }}
-                      >
+                       ref={prov.innerRef}
+                      {...prov.draggableProps}
+                      {...prov.dragHandleProps}
+                      component={Link}
+                      to={`/boards/${b.id}`}
+                      button
+                      selected={b.id === boardId}
+                      sx={{
+                          borderRadius: 50,
+                          '&:hover': {
+                          bgcolor: '#000000',
+                          color: '#fff',
+                          '& .MuiListItemIcon-root, & .MuiListItemText-primary': {
+                          color: '#fff',
+                          },
+                         }
+                       }}
+                       >
+  
                         <ListItemIcon><Typography variant="body2">{b.icon}</Typography></ListItemIcon>
                         <ListItemText primary={b.title} primaryTypographyProps={{ noWrap: true, variant: 'body2' }} />
                       </ListItem>
@@ -159,14 +207,7 @@ const Sidebar = () => {
       </Box>
 
       <Divider />
-      <Box sx={{
-        px: 2,
-        py: 1,
-        position: 'sticky',
-        bottom: 0,
-        bgcolor: theme.palette.background.paper,
-        zIndex: 1
-      }}>
+      <Box sx={{ px: 2, py: 1, position: 'sticky', bottom: 0, bgcolor: theme.palette.background.paper, zIndex: 1 }}>
         <ListItem button onClick={handleLogout}>
           <ListItemIcon><LogoutIcon /></ListItemIcon>
           <ListItemText primary="Logout" primaryTypographyProps={{ variant: 'body2' }} />
@@ -198,20 +239,7 @@ const Sidebar = () => {
         SlideProps={{ timeout: 300, easing: { enter: theme.transitions.easing.easeOut, exit: theme.transitions.easing.easeIn } }}
         ModalProps={{ keepMounted: true }}
         BackdropProps={{ style: { backdropFilter: isMobile ? 'blur(3px)' : 'none' } }}
-        PaperProps={{
-          sx: {
-            width: drawerWidth,
-            borderRight: 'none',
-            boxShadow: theme.shadows[4],
-            willChange: 'transform',
-            backfaceVisibility: 'hidden',
-            transitionProperty: 'transform',
-            transitionDuration: '300ms',
-            transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)',
-            transform: 'translateZ(0)',
-            overflow: 'hidden',
-          }
-        }}
+        PaperProps={{ sx: { width: drawerWidth, borderRight: 'none', boxShadow: theme.shadows[4], overflow: 'hidden' } }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', px: 2, py: 2.8, justifyContent: 'space-between' }}>
           <Box sx={{ fontSize: '1.3rem', fontWeight: 'bold' }}>Kanban</Box>
@@ -223,4 +251,4 @@ const Sidebar = () => {
   )
 }
 
-export default Sidebar
+export default React.memo(Sidebar)
