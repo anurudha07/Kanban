@@ -30,26 +30,18 @@ npm install
 # Frontend
 cd ../client
 npm install && npm run build
-Environment
-server/.env
 
-ini
-Copy
-Edit
+create .env ---->
+
+server/.env.development
 MONGODB_URL=your_mongodb_uri
 TOKEN_SECRET_KEY=your_jwt_secret
 SESSION_SECRET=your_cookie_secret
 PORT=5000
-client/.env.development
 
-bash
-Copy
-Edit
+client/.env.development
 REACT_APP_API_URL=http://localhost:5000/api/v1
-Run
-bash
-Copy
-Edit
+
 # Server
 cd server
 npm start
@@ -78,8 +70,4 @@ Anurudha Sarkar
 📧 anurudhs567@gmail.com
 🔗 LinkedIn
 
-vbnet
-Copy
-Edit
 
-Let me know if you'd like a version with installation screenshots, links to demo, or a `demo.gif`.
