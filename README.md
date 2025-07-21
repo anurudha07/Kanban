@@ -1,120 +1,85 @@
-# Kanban | Your Personal Productivity Hub
-Kanban is build using Redux & MERN stack 
+# Kanban
 
-# Description
-This Kanban Board App provides a flexible, mobile‑responsive interface for organizing workflows. Create boards, add dynamic sections, and drag‑and‑drop task cards to reflect your process. With real‑time updates, emoji icons, and favorites, it’s your personal productivity hub—anywhere, anytime.
+A personal productivity hub built with the MERN stack + Redux.
 
-# Features
+## Features
 
-## User Authentication
-• Secure signup & login using JSON Web Tokens (JWT).
+- 🔐 JWT Auth (Signup/Login)
+- 🗂 Create, rename, delete boards
+- ⭐ Favorite boards with emoji icons
+- 🧩 Add, edit, delete sections dynamically
+- 🔄 Drag & drop sections/tasks
+- 📝 CKEditor for rich task descriptions
+- 💻 Responsive UI for all screens
+- 🎨 Font styling for task content
 
-## Board Management
-• Create, rename, and delete boards
+## Tech Stack
 
-• Favorite boards for quick access
+- **Frontend**: React, Redux Toolkit, React Router, Material-UI, React Beautiful DnD, CKEditor  
+- **Backend**: Node.js, Express.js, MongoDB (Mongoose)  
+- **Auth**: JWT  
+- **Deploy**: Vercel (client), Render (server)
 
-• Emoji icons for visual customization
+## Setup
 
-
-## Section Management
-• Add, edit, and delete sections dynamically
-
-• Reorder sections via drag‑and‑drop
-
-## Task Management
-• Add, edit, and delete tasks within sections
-
-• Drag‑and‑drop tasks between sections & reorder
-
-• Rich text content for task descriptions (CKEditor)
-
-## Responsive UI
-• Permanent sidebar on desktop; hamburger menu on mobile
-
-• Horizontal scroll for Kanban columns on tablets/desktop
-
-• Vertical stacking of columns on small screens
-
-• Shrinking spinner, slim scrollbars, and compact modals for mobile
-
-## Favorites & Fints
-• Mark boards as favorites
-
-• Apply Fonts and styles to your task contemts
-
-
-# Tech Stack
-Frontend: React.js, Redux Toolkit, React Router, Material‑UI, React Beautiful DnD, CKEditor
-
-Backend: Node.js, Express.js, Mongoose (MongoDB ODM)
-
-Authentication: JWT (via jsonwebtoken)
-
-Deployment: Render (or Heroku) for server; Vercel (or Netlify) for client
-
-
+```bash
 # Backend
-cd server 
-npm install 
+cd server
+npm install
 
 # Frontend
-cd ../client 
-npm install && npm run build 
+cd ../client
+npm install && npm run build
+Environment
+server/.env
 
-# Configure environment variables
-
-In server/.env:
-
-MONGODB_URL=your_mongodb_connection_string
-
+ini
+Copy
+Edit
+MONGODB_URL=your_mongodb_uri
 TOKEN_SECRET_KEY=your_jwt_secret
-
 SESSION_SECRET=your_cookie_secret
-
 PORT=5000
+client/.env.development
 
-
-In client/.env.development:
-
+bash
+Copy
+Edit
 REACT_APP_API_URL=http://localhost:5000/api/v1
-
-
-# Start backend
+Run
+bash
+Copy
+Edit
+# Server
 cd server
 npm start
 
-# Start frontend
+# Client
 cd client
 npm start
+Visit http://localhost:3000
 
-Open
-Visit http://localhost:3000 in your browser.
+Usage
+Create boards → Add sections → Add tasks
 
-# Usage
-Sign up or log in.
+Drag to reorder tasks or sections
 
-Create your first board with the “Add Board” button.
+Star boards to favorite them
 
-Inside a board, click “Add Section” to create columns.
+Edit content inline
 
-Use the “+” button to add tasks to any section.
+Works perfectly on mobile/tablet
 
-Drag‑and‑drop sections or tasks to reorder or move them.
+License
+MIT
 
-Click the star icon to favorite a board; access favorites from the sidebar.
-
-Edit titles, descriptions, and emojis inline.
-
-Delete boards, sections, or tasks with the delete icon.
-
-# Contributing
-Contributions are welcome! Please open an issue or submit a pull request for bug fixes, feature requests, or improvements.
-
-# License
-This project is licensed under the MIT License.
-
-# Contact
+Contact
 Anurudha Sarkar
 📧 anurudhs567@gmail.com
-🔖 LinkedIn - https://www.linkedin.com/in/anurudha-sarkar-3b77ab228/
+🔗 LinkedIn
+
+vbnet
+Copy
+Edit
+
+Let me know if you'd like a version with installation screenshots, links to demo, or a `demo.gif`.
