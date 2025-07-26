@@ -18,7 +18,7 @@ A personal productivity hub built with the MERN stack + Redux.
 - **Frontend**: React, Redux Toolkit, React Router, Material-UI
 - **Backend**: Node.js, Express.js, MongoDB (Mongoose)  
 - **Auth**: JWT  
-- **Deploy**: Vercel (client), Render (server)
+- **Deploy**: Render (client) ---> static site , Render (server) --> web services
 
 ## Setup
 
