@@ -75,7 +75,7 @@ const Login = () => {
         onSubmit={handleSubmit}
         noValidate
         sx={{
-          width: 300,
+          width: 280,
           bgcolor: 'background.paper',
           px: 3,
           pt: 1.8,
@@ -89,7 +89,7 @@ const Login = () => {
           },
         }}
       >
-        <Typography variant="h5" align="center" gutterBottom>
+        <Typography variant="h6" align="center" gutterBottom>
           Login
         </Typography>
 
