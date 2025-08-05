@@ -1,5 +1,7 @@
  Kanban
 
+---
+
 A personal productivity hub built with the MERN stack + Redux.
 
 ---
