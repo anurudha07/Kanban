@@ -1,8 +1,10 @@
-# Kanban
+ Kanban
 
 A personal productivity hub built with the MERN stack + Redux.
 
-## Features
+---
+
+ Features
 
 - 🔐 JWT Auth (Signup/Login)
 - 🗂 Create, rename, delete boards
