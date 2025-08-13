@@ -1,6 +1,6 @@
  Kanban
  
-A personal productivity hub built with the MERN + Redux.
+A personal productivity hub built with the React + Redux + Node + MongoDB.
 
 ---
 
