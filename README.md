@@ -55,7 +55,7 @@ SESSION_SECRET=your_cookie_secret
 PORT=your_port | 5000
 
 
-client/.env.development
+----- client -----
 REACT_APP_API_URL=http://localhost:5000/api/v1
 
 
