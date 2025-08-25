@@ -61,13 +61,13 @@ REACT_APP_API_URL=http://localhost:5000/api/v1
 
 
 🔗 Backend setup
-cd backend
+cd server
 npm i
 npm start
 
 
 💻 Frontend setup
-cd frontend
+cd client
 npm install --legacy-peer-deps
 npm run build
 npm start
