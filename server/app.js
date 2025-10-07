@@ -11,7 +11,7 @@ const corsOptions = {
   origin: [
 
     'http://192.168.29.227:3000',
-    'https://kanban-client-b8bj.onrender.com'
+    'https://kanban-gray-eight.vercel.app'
   ],
   credentials: true,
   optionsSuccessStatus: 200
