@@ -47,7 +47,7 @@ const Home = () => {
       </LoadingButton>
 
       <Typography variant="caption" sx={{ fontSize: isMobile ? '0.66rem' : '0.74rem', color: 'text.secondary' }}>
-        Create a new board now — start adding sections and tasks instantly.
+        Create a new board now — start adding projects and tasks instantly.
       </Typography>
     </Box>
   )
