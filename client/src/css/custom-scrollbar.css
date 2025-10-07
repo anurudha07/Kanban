@@ -14,3 +14,10 @@
 ::-webkit-scrollbar-thumb:hover {
   background-color: #555;
 }
+
+@media (max-width:600px) {
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+}
+

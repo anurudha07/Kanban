@@ -1,202 +1,213 @@
+import React, { useState, useEffect, useRef } from 'react'
+import {
+  Box,
+  IconButton,
+  TextField,
+  useTheme,
+  useMediaQuery,
+  Fade,
+  ToggleButton,
+  ToggleButtonGroup
+} from '@mui/material'
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
 import StarBorderOutlinedIcon from '@mui/icons-material/StarBorderOutlined'
 import StarOutlinedIcon from '@mui/icons-material/StarOutlined'
-import { Box, IconButton, TextField } from '@mui/material'
-import { useEffect, useState } from 'react'
+import ViewKanbanIcon from '@mui/icons-material/ViewKanban'
+import ListIcon from '@mui/icons-material/List'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
+
 import boardApi from '../api/boardApi'
 import EmojiPicker from '../components/common/EmojiPicker'
 import Kanban from '../components/common/Kanban'
-import { setBoards } from '../redux/features/boardSlice'
-import { setFavouriteList } from '../redux/features/favouriteSlice'
+import TaskList from '../components/common/TaskList'
 
-let timer
-const timeout = 500
+import {
+  setBoards,
+  updateBoard,
+  removeBoard
+} from '../redux/features/boardSlice'
+import {
+  setFavouriteList,
+  updateFavourite,
+  removeFavourite
+} from '../redux/features/favouriteSlice'
 
 const Board = () => {
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const { boardId } = useParams()
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
+
+  const allBoards = useSelector(s => s.board.value || [])
+  const favourites = useSelector(s => s.favourites.value || [])
+
   const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
+  const [desc, setDesc] = useState('')
   const [sections, setSections] = useState([])
-  const [isFavourite, setIsFavourite] = useState(false)
+  const [fav, setFav] = useState(false)
   const [icon, setIcon] = useState('')
+  const [justSaved, setJustSaved] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+  const [view, setView] = useState('kanban')
 
-  const boards = useSelector((state) => state.board.value)
-  const favouriteList = useSelector((state) => state.favourites.value)
+  const titleTimer = useRef(null)
+  const descTimer = useRef(null)
+  const iconTimer = useRef(null)
 
-  useEffect(() => {
-    const getBoard = async () => {
-      try {
-        const res = await boardApi.getOne(boardId)
-        setTitle(res.title)
-        setDescription(res.description)
-        setSections(res.sections)
-        setIsFavourite(res.favourite)
-        setIcon(res.icon)
-      } catch (err) {
-        alert(err)
-      }
+  const loadBoard = async () => {
+    setLoaded(false)
+    try {
+      const r = await boardApi.getOne(boardId)
+      setTitle(r.title || '')
+      setDesc(r.description || '')
+      setSections(r.sections || [])
+      setFav(r.favourite)
+      setIcon(r.icon)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoaded(true)
     }
-    getBoard()
-  }, [boardId])
+  }
 
-  const onIconChange = async (newIcon) => {
-    let temp = [...boards]
-    const index = temp.findIndex(e => e.id === boardId)
-    temp[index] = { ...temp[index], icon: newIcon }
+  useEffect(() => { loadBoard() }, [boardId])
 
-    if (isFavourite) {
-      let tempFavourite = [...favouriteList]
-      const favouriteIndex = tempFavourite.findIndex(e => e.id === boardId)
-      tempFavourite[favouriteIndex] = { ...tempFavourite[favouriteIndex], icon: newIcon }
-      dispatch(setFavouriteList(tempFavourite))
-    }
+  const save = (changes) => {
+    boardApi.update(boardId, changes)
+      .then(updated => {
+        dispatch(updateBoard(updated))
+        dispatch(updateFavourite(updated))
+        return boardApi.getAll()
+      })
+      .then(all => dispatch(setBoards(all)))
+      .catch(console.error)
+    setJustSaved(true)
+    clearTimeout(titleTimer.current)
+    titleTimer.current = setTimeout(() => setJustSaved(false), 1500)
+  }
 
+  const onTitleChange = e => {
+    const v = e.target.value
+    setTitle(v)
+    clearTimeout(titleTimer.current)
+    titleTimer.current = setTimeout(() => save({ title: v }), 200)
+  }
+
+  const onDescChange = e => {
+    const v = e.target.value
+    setDesc(v)
+    clearTimeout(descTimer.current)
+    descTimer.current = setTimeout(() => save({ description: v }), 200)
+  }
+
+  const onIconChange = newIcon => {
     setIcon(newIcon)
-    dispatch(setBoards(temp))
-    try {
-      await boardApi.update(boardId, { icon: newIcon })
-    } catch (err) {
-      alert(err)
-    }
+    clearTimeout(iconTimer.current)
+    iconTimer.current = setTimeout(() => save({ icon: newIcon }), 200)
   }
 
-  const updateTitle = async (e) => {
-    clearTimeout(timer)
-    const newTitle = e.target.value
-    setTitle(newTitle)
-
-    let temp = [...boards]
-    const index = temp.findIndex(e => e.id === boardId)
-    temp[index] = { ...temp[index], title: newTitle }
-
-    if (isFavourite) {
-      let tempFavourite = [...favouriteList]
-      const favouriteIndex = tempFavourite.findIndex(e => e.id === boardId)
-      tempFavourite[favouriteIndex] = { ...tempFavourite[favouriteIndex], title: newTitle }
-      dispatch(setFavouriteList(tempFavourite))
-    }
-
-    dispatch(setBoards(temp))
-
-    timer = setTimeout(async () => {
-      try {
-        await boardApi.update(boardId, { title: newTitle })
-      } catch (err) {
-        alert(err)
-      }
-    }, timeout);
+  const onToggleFav = () => {
+    const nf = !fav
+    setFav(nf)
+    if (nf) {
+      const thisBoard = { id: boardId, title, description: desc, icon, favourite: true }
+      dispatch(setFavouriteList([thisBoard, ...favourites]))
+    } else dispatch(removeFavourite(boardId))
+    boardApi.update(boardId, { favourite: nf })
+      .then(updated => dispatch(updateBoard(updated)))
+      .catch(err => {
+        console.error('Failed to toggle favourite:', err)
+        setFav(!nf)
+      })
   }
 
-  const updateDescription = async (e) => {
-    clearTimeout(timer)
-    const newDescription = e.target.value
-    setDescription(newDescription)
-    timer = setTimeout(async () => {
-      try {
-        await boardApi.update(boardId, { description: newDescription })
-      } catch (err) {
-        alert(err)
-      }
-    }, timeout);
+  const onDelete = () => {
+    dispatch(removeBoard(boardId))
+    dispatch(removeFavourite(boardId))
+    navigate('/')
+    boardApi.delete(boardId).catch(console.error)
   }
 
-  const addFavourite = async () => {
-    try {
-      const board = await boardApi.update(boardId, { favourite: !isFavourite })
-      let newFavouriteList = [...favouriteList]
-      if (isFavourite) {
-        newFavouriteList = newFavouriteList.filter(e => e.id !== boardId)
-      } else {
-        newFavouriteList.unshift(board)
-      }
-      dispatch(setFavouriteList(newFavouriteList))
-      setIsFavourite(!isFavourite)
-    } catch (err) {
-      alert(err)
-    }
-  }
+  const handleViewChange = (_, next) => { if (next) setView(next) }
 
-  const deleteBoard = async () => {
-    try {
-      await boardApi.delete(boardId)
-      if (isFavourite) {
-        const newFavouriteList = favouriteList.filter(e => e.id !== boardId)
-        dispatch(setFavouriteList(newFavouriteList))
-      }
-
-      const newList = boards.filter(e => e.id !== boardId)
-      if (newList.length === 0) {
-        navigate('/boards')
-      } else {
-        navigate(`/boards/${newList[0].id}`)
-      }
-      dispatch(setBoards(newList))
-    } catch (err) {
-      alert(err)
-    }
-  }
+  if (!loaded) return null
 
   return (
-    <>
-      <Box sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        width: '100%'
-      }}>
-        <IconButton variant='outlined' onClick={addFavourite}>
-          {
-            isFavourite ? (
-              <StarOutlinedIcon color='warning' />
-            ) : (
-              <StarBorderOutlinedIcon />
-            )
-          }
-        </IconButton>
-        <IconButton variant='outlined' color='error' onClick={deleteBoard}>
-          <DeleteOutlinedIcon />
-        </IconButton>
-      </Box>
-      <Box sx={{ padding: '10px 50px' }}>
-        <Box>
-          {/* emoji picker */}
-          <EmojiPicker icon={icon} onChange={onIconChange} />
+    <Fade in timeout={200}>
+      <Box>
+        {/* Top Bar */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 1, py: 0.25 }}>
+          <ToggleButtonGroup value={view} exclusive onChange={handleViewChange} size="small">
+            <ToggleButton value="kanban"><ViewKanbanIcon fontSize="small" /></ToggleButton>
+            <ToggleButton value="list"><ListIcon fontSize="small" /></ToggleButton>
+          </ToggleButtonGroup>
+
+          <Box>
+            <IconButton onClick={onToggleFav} size="small">
+              {fav ? <StarOutlinedIcon color="warning" fontSize="small" /> : <StarBorderOutlinedIcon fontSize="small" />}
+            </IconButton>
+            <IconButton color="error" onClick={onDelete} size="small">
+              <DeleteOutlinedIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        </Box>
+
+        {/* Content */}
+        <Box sx={{ px: 1, py: 0.5, overflowY: 'auto', maxHeight: 'calc(100vh - 60px)' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+            <EmojiPicker icon={icon} onChange={onIconChange} />
+            <TextField
+              fullWidth
+              variant="outlined"
+              placeholder="Untitled"
+              value={title}
+              onChange={onTitleChange}
+              sx={{
+                '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                '& .MuiInputBase-input': { fontSize: '1rem', fontWeight: 600, py: 0.3 }
+              }}
+              size="small"
+            />
+          </Box>
+
           <TextField
-            value={title}
-            onChange={updateTitle}
-            placeholder='Untitled'
-            variant='outlined'
             fullWidth
-            sx={{
-              '& .MuiOutlinedInput-input': { padding: 0 },
-              '& .MuiOutlinedInput-notchedOutline': { border: 'unset ' },
-              '& .MuiOutlinedInput-root': { fontSize: '2rem', fontWeight: '700' }
-            }}
-          />
-          <TextField
-            value={description}
-            onChange={updateDescription}
-            placeholder='Add a description'
-            variant='outlined'
             multiline
-            fullWidth
+            placeholder="Description..."
+            value={desc}
+            onChange={onDescChange}
             sx={{
-              '& .MuiOutlinedInput-input': { padding: 0 },
-              '& .MuiOutlinedInput-notchedOutline': { border: 'unset ' },
-              '& .MuiOutlinedInput-root': { fontSize: '0.8rem' }
+              '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+              '& .MuiInputBase-input': { fontSize: '0.75rem', py: 0.3 }
             }}
+            size="small"
           />
-        </Box>
-        <Box>
-          {/* Kanban board */}
-          <Kanban data={sections} boardId={boardId} />
+
+          <Box sx={{ mt: 1 }}>
+            {view === 'kanban' ? (
+              <Kanban data={sections} boardId={boardId} onSectionsChange={setSections} />
+            ) : (
+              <TaskList
+                sections={sections}
+                boardId={boardId}
+                onReload={(resp) => {
+                  if (resp && resp.sections) {
+                    setSections(resp.sections)
+                    setTitle(resp.title || '')
+                    setDesc(resp.description || '')
+                    setFav(resp.favourite)
+                    setIcon(resp.icon)
+                  } else loadBoard()
+                }}
+                compact
+              />
+            )}
+          </Box>
         </Box>
       </Box>
-    </>
+    </Fade>
   )
 }
 

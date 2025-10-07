@@ -1,42 +1,42 @@
-import { Container, Box } from '@mui/material'
-import { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
+import { Container, Box, useTheme, useMediaQuery } from '@mui/material'
 import { Outlet, useNavigate } from 'react-router-dom'
 import authUtils from '../../utils/authUtils'
 import Loading from '../common/Loading'
 import assets from '../../assets'
 
 const AuthLayout = () => {
-  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('xs'))
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const isAuth = await authUtils.isAuthenticated()
-      if (!isAuth) {
-        setLoading(false)
-      } else {
-        navigate('/')
-      }
-    }
-    checkAuth()
-  }, [navigate])
+  useEffect(()=>{
+    authUtils.isAuthenticated().then(isAuth=>{
+      if(isAuth) navigate('/')
+      else setLoading(false)
+    })
+  },[navigate])
+
+  if(loading) return <Loading fullHeight/>
 
   return (
-    loading ? (
-      <Loading fullHeight />
-    ) : (
-      <Container component='main' maxWidth='xs'>
-        <Box sx={{
-          marginTop: 8,
-          display: 'flex',
-          alignItems: 'center',
-          flexDirection: 'column'
-        }}>
-          <img src={assets.images.logoDark} style={{ width: '100px' }} alt='app logo' />
-          <Outlet />
-        </Box>
-      </Container>
-    )
+    <Container component='main' maxWidth='xs'>
+      <Box sx={{
+        mt: isMobile?4:8,
+        display:'flex',
+        flexDirection:'column',
+        alignItems:'center'
+      }}>
+        <img
+          src={assets.images.logoDark}
+          alt='logo'
+          width={isMobile?64:100}
+          style={{ marginBottom: theme.spacing(2) }}
+        />
+        <Outlet/>
+      </Box>
+    </Container>
   )
 }
 

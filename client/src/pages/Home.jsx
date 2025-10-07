@@ -1,24 +1,26 @@
-import { Box } from "@mui/material"
+import React, { useState } from 'react'
+import { Box, useTheme, useMediaQuery, Typography } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton'
-import { useDispatch } from "react-redux"
-import { setBoards } from "../redux/features/boardSlice"
-import { useNavigate } from "react-router-dom"
-import boardApi from "../api/boardApi"
-import { useState } from "react"
+import { useNavigate } from 'react-router-dom'
+import boardApi from '../api/boardApi'
+import { addBoard } from '../redux/features/boardSlice'
+import { useDispatch } from 'react-redux'
 
 const Home = () => {
-  const navigate = useNavigate()
   const dispatch = useDispatch()
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   const createBoard = async () => {
     setLoading(true)
     try {
       const res = await boardApi.create()
-      dispatch(setBoards([res]))
+      dispatch(addBoard(res))
       navigate(`/boards/${res.id}`)
-    } catch (err) {
-      alert(err)
+    } catch (e) {
+      alert(e)
     } finally {
       setLoading(false)
     }
@@ -29,16 +31,24 @@ const Home = () => {
       height: '100%',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'center'
+      justifyContent: 'center',
+      p: isMobile ? 2 : 0,
+      flexDirection: 'column',
+      gap: 1
     }}>
       <LoadingButton
         variant='outlined'
         color='success'
-        onClick={createBoard}
         loading={loading}
+        onClick={createBoard}
+        sx={{ fontSize: isMobile ? '0.6rem' : '0.7rem', px: 1.2, py: 0.5 }}
       >
-        Click here to create your first board
+        Create board now
       </LoadingButton>
+
+      <Typography variant="caption" sx={{ fontSize: isMobile ? '0.66rem' : '0.74rem', color: 'text.secondary' }}>
+        Create a new board now — start adding sections and tasks instantly.
+      </Typography>
     </Box>
   )
 }

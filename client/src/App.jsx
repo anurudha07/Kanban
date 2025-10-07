@@ -5,7 +5,7 @@ import '@fontsource/roboto/700.css'
 import './css/custom-scrollbar.css'
 import CssBaseLine from '@mui/material/CssBaseline'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { HashRouter, Route, Routes } from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout'
 import AuthLayout from './components/layout/AuthLayout'
 import Home from './pages/Home'
@@ -21,9 +21,9 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseLine />
-      <BrowserRouter>
+      <HashRouter>
         <Routes>
-          <Route path='/' element={<AuthLayout />}>
+          <Route path='/' >
             <Route path='login' element={<Login />} />
             <Route path='signup' element={<Signup />} />
           </Route>
@@ -33,7 +33,7 @@ function App() {
             <Route path='boards/:boardId' element={<Board />} />
           </Route>
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
     </ThemeProvider>
   );
 }

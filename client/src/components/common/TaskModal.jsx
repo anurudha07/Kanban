@@ -1,172 +1,193 @@
-import { Backdrop, Fade, IconButton, Modal, Box, TextField, Typography, Divider } from '@mui/material'
 import React, { useEffect, useRef, useState } from 'react'
+import {
+  Modal, Backdrop, Fade, Box, IconButton, TextField,
+  Typography, Divider, useTheme, useMediaQuery
+} from '@mui/material'
+import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined'
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
 import Moment from 'moment'
 import { CKEditor } from '@ckeditor/ckeditor5-react'
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
 import taskApi from '../../api/taskApi'
-
 import '../../css/custom-editor.css'
 
-const modalStyle = {
-  outline: 'none',
+const baseStyle = {
   position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: '50%',
-  bgcolor: 'background.paper',
-  border: '0px solid #000',
-  boxShadow: 24,
-  p: 1,
-  height: '80%'
+  bgcolor: '#1e1e1e', 
+  border: 'none',
+  boxShadow: 12,
+  p: 0.5,
+  borderRadius: 1,
+  fontSize: '0.7rem'
 }
 
-let timer
-const timeout = 500
-let isModalClosed = false
+let debounceTimer
+const DEBOUNCE = 500
 
-const TaskModal = props => {
-  const boardId = props.boardId
-  const [task, setTask] = useState(props.task)
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
-  const editorWrapperRef = useRef()
+const TaskModal = ({ task: t0, boardId, onUpdate, onDelete, onClose }) => {
+  const [task, setTask] = useState(t0)
+  const [title, setTitle] = useState(t0?.title || '')
+  const [content, setContent] = useState(t0?.content || '')
+  const editorRef = useRef()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   useEffect(() => {
-    setTask(props.task)
-    setTitle(props.task !== undefined ? props.task.title : '')
-    setContent(props.task !== undefined ? props.task.content : '')
-    if (props.task !== undefined) {
-      isModalClosed = false
+    setTask(t0)
+    setTitle(t0?.title || '')
+    setContent(t0?.content || '')
 
-      updateEditorHeight()
-    }
-  }, [props.task])
-
-  const updateEditorHeight = () => {
     setTimeout(() => {
-      if (editorWrapperRef.current) {
-        const box = editorWrapperRef.current
-        box.querySelector('.ck-editor__editable_inline').style.height = (box.offsetHeight - 50) + 'px'
-      }
-    }, timeout)
-  }
-
-  const onClose = () => {
-    isModalClosed = true
-    props.onUpdate(task)
-    props.onClose()
-  }
-
-  const deleteTask = async () => {
-    try {
-      await taskApi.delete(boardId, task.id)
-      props.onDelete(task)
-      setTask(undefined)
-    } catch (err) {
-      alert(err)
-    }
-  }
-
-  const updateTitle = async (e) => {
-    clearTimeout(timer)
-    const newTitle = e.target.value
-    timer = setTimeout(async () => {
-      try {
-        await taskApi.update(boardId, task.id, { title: newTitle })
-      } catch (err) {
-        alert(err)
-      }
-    }, timeout)
-
-    task.title = newTitle
-    setTitle(newTitle)
-    props.onUpdate(task)
-  }
-
-  const updateContent = async (event, editor) => {
-    clearTimeout(timer)
-    const data = editor.getData()
-
-    console.log({ isModalClosed })
-
-    if (!isModalClosed) {
-      timer = setTimeout(async () => {
-        try {
-          await taskApi.update(boardId, task.id, { content: data })
-        } catch (err) {
-          alert(err)
+      if (editorRef.current) {
+        const editable = editorRef.current.querySelector('.ck-editor__editable_inline')
+        if (editable) {
+          editable.style.height = (editorRef.current.offsetHeight - 60) + 'px'
         }
-      }, timeout);
+      }
+    }, 300)
+  }, [t0])
 
-      task.content = data
-      setContent(data)
-      props.onUpdate(task)
-    }
+  const handleClose = () => {
+    onUpdate({ ...task, title, content })
+    onClose()
   }
+
+  const handleDelete = () => {
+    taskApi.delete(boardId, task.id)
+      .then(() => {
+        onDelete(task)
+        onClose()
+      })
+      .catch(console.error)
+  }
+
+  const updateTitle = e => {
+    clearTimeout(debounceTimer)
+    const v = e.target.value
+    setTitle(v)
+    setTask(prev => ({ ...prev, title: v }))
+    debounceTimer = setTimeout(() => {
+      taskApi.update(boardId, task.id, { title: v }).catch(console.error)
+    }, DEBOUNCE)
+  }
+
+  const updateContent = (_, editor) => {
+    clearTimeout(debounceTimer)
+    const d = editor.getData()
+    setContent(d)
+    setTask(prev => ({ ...prev, content: d }))
+    debounceTimer = setTimeout(() => {
+      taskApi.update(boardId, task.id, { content: d }).catch(console.error)
+    }, DEBOUNCE)
+  }
+
+  if (!task) return null
 
   return (
     <Modal
-      open={task !== undefined}
-      onClose={onClose}
+      open={!!task}
+      onClose={handleClose}
       closeAfterTransition
       BackdropComponent={Backdrop}
-      BackdropProps={{ timeout: 500 }}
+      BackdropProps={{ timeout: 400 }}
     >
-      <Fade in={task !== undefined}>
-        <Box sx={modalStyle}>
-          <Box sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            width: '100%'
-          }}>
-            <IconButton variant='outlined' color='error' onClick={deleteTask}>
-              <DeleteOutlinedIcon />
-            </IconButton>
-          </Box>
-          <Box sx={{
-            display: 'flex',
-            height: '100%',
-            flexDirection: 'column',
-            padding: '2rem 5rem 5rem'
-          }}>
-            <TextField
-              value={title}
-              onChange={updateTitle}
-              placeholder='Untitled'
-              variant='outlined'
-              fullWidth
+      <Fade in={!!task}>
+        <Box sx={{
+  ...baseStyle,
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%,-50%)',
+  width: isMobile ? '90vw' : '38%',
+  height: isMobile ? '75vh' : '55%',
+  outline: 'none',
+  display: 'flex',
+  flexDirection: 'column'
+}}>
+
+          {/* Top Actions */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>
+            <IconButton
+              onClick={handleDelete}
+              size="small"
               sx={{
-                width: '100%',
-                '& .MuiOutlinedInput-input': { padding: 0 },
-                '& .MuiOutlinedInput-notchedOutline': { border: 'unset ' },
-                '& .MuiOutlinedInput-root': { fontSize: '2.5rem', fontWeight: '700' },
-                marginBottom: '10px'
-              }}
-            />
-            <Typography variant='body2' fontWeight='700'>
-              {task !== undefined ? Moment(task.createdAt).format('YYYY-MM-DD') : ''}
-            </Typography>
-            <Divider sx={{ margin: '1.5rem 0' }} />
-            <Box
-              ref={editorWrapperRef}
-              sx={{
-                position: 'relative',
-                height: '80%',
-                overflowX: 'hidden',
-                overflowY: 'auto'
+                color: 'error.main',
+                bgcolor: 'transparent',
+                '&:hover': { bgcolor: 'rgba(255,0,0,0.1)' }
               }}
             >
-              <CKEditor
-                editor={ClassicEditor}
-                data={content}
-                onChange={updateContent}
-                onFocus={updateEditorHeight}
-                onBlur={updateEditorHeight}
+              <DeleteOutlinedIcon fontSize="inherit" />
+            </IconButton>
+
+            <IconButton
+              onClick={handleClose}
+              size="small"
+              sx={{
+                ml: 0.5,
+                bgcolor: 'transparent',
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
+              }}
+            >
+              <CloseOutlinedIcon fontSize="inherit" />
+            </IconButton>
+
+            
+          </Box>
+
+          {/* Title & Content */}
+          <Box sx={{ px: 1, flex: 1, display: 'flex', flexDirection: 'column' }}>
+            {/* Title + Date */}
+            <Box sx={{ mb: 0.5 }}>
+              <TextField
+                fullWidth
+                variant='outlined'
+                placeholder='Untitled'
+                value={title}
+                onChange={updateTitle}
+                size="small"
+                sx={{
+                  mb: 0.25,
+                  '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                  '& .MuiInputBase-input': {
+                    fontSize: isMobile ? '0.95rem' : '1.05rem',
+                    fontWeight: 600,
+                    py: 0.3,
+                    color: '#fff'
+                  }
+                }}
               />
+              <Typography
+                variant='caption'
+                sx={{
+                  fontSize: '0.65rem',
+                  color: 'text.secondary',
+                  display: 'block'
+                }}
+              >
+                Created: {Moment(task.createdAt).format('YYYY-MM-DD')}
+              </Typography>
             </Box>
+
+            <Divider sx={{ mb: 0.5, borderColor: 'rgba(255,255,255,0.2)' }} />
+
+            {/* CKEditor Content */}
+<Box
+  ref={editorRef}
+  sx={{
+    flex: 1,         
+    overflowY: 'auto', 
+    overflowX: 'hidden',
+    minHeight: 100,   
+    maxHeight: '100%', 
+  }}
+>
+  <CKEditor
+    editor={ClassicEditor}
+    data={content}
+    onChange={updateContent}
+  />
+</Box>
+
           </Box>
         </Box>
       </Fade>
